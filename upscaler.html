@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Perfect Upscaler</title>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    input[type="number"] {
+      width: 80px;
+      padding: 5px;
+      font-size: 16px;
+      margin: 10px;
+    }
+    canvas {
+      image-rendering: pixelated;
+      margin-top: 10px;
+      max-width: 100%;
+      border: 2px solid #555;
+    }
+    #outputInfo {
+      margin: 10px;
+      font-size: 14px;
+      color: #aaa;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    .button {
+      background: #2e8b57;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .button:hover {
+      background: #3cb371;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🖼️ Pixel Perfect Upscaler</h1>
+
+  <input type="file" id="imageInput" accept="image/*"><br>
+  <label for="multiplier">Multiplier:</label>
+  <input type="number" id="multiplier" value="2" step="0.1" min="1">
+
+  <div id="outputInfo">No image loaded</div>
+
+  <canvas id="canvas"></canvas>
+
+  <div id="controls">
+    <button class="button" id="downloadBtn" style="display:none;">Download Upscaled</button>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const multiplierInput = document.getElementById("multiplier");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const outputInfo = document.getElementById("outputInfo");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    let originalImage = new Image();
+
+    function updateCanvas() {
+      const scale = parseFloat(multiplierInput.value);
+      if (isNaN(scale) || scale <= 0 || !originalImage.src) return;
+
+      const w = originalImage.width;
+      const h = originalImage.height;
+      const newW = Math.round(w * scale);
+      const newH = Math.round(h * scale);
+
+      canvas.width = newW;
+      canvas.height = newH;
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, newW, newH);
+      ctx.drawImage(originalImage, 0, 0, w, h, 0, 0, newW, newH);
+
+      outputInfo.innerText = `Original: ${w}x${h} → Upscaled: ${newW}x${newH}`;
+      downloadBtn.style.display = "inline-block";
+    }
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        originalImage.onload = updateCanvas;
+        originalImage.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    multiplierInput.addEventListener("input", updateCanvas);
+
+    downloadBtn.addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = "upscaled.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+  </script>
+</body>
+</html>
