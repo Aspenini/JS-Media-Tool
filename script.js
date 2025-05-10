@@ -9,13 +9,48 @@ const elements = {
     fileInputLabel: document.querySelector('.file-input-label')
 };
 
+/**
+ * Parses a GIF file and returns its frames and delays
+ * @param {ArrayBuffer} arrayBuffer - The GIF file as an ArrayBuffer
+ * @returns {Promise<Object>} Object containing frames and delays
+ */
+async function parseGIF(arrayBuffer) {
+    return new Promise((resolve, reject) => {
+        const gif = new GifReader(new Uint8Array(arrayBuffer));
+        const frames = [];
+        const delays = [];
+        
+        for (let i = 0; i < gif.numFrames(); i++) {
+            const frameInfo = gif.frameInfo(i);
+            const frameCanvas = document.createElement('canvas');
+            frameCanvas.width = frameInfo.width;
+            frameCanvas.height = frameInfo.height;
+            const frameCtx = frameCanvas.getContext('2d');
+            
+            const imageData = frameCtx.createImageData(frameInfo.width, frameInfo.height);
+            gif.decodeAndBlitFrameRGBA(i, imageData.data);
+            frameCtx.putImageData(imageData, 0, 0);
+            
+            frames.push(frameCanvas);
+            delays.push(frameInfo.delay * 10); // Convert to milliseconds
+        }
+        
+        resolve({ frames, delays });
+    });
+}
+
 // Canvas context
 const ctx = elements.canvas.getContext("2d");
 
 // State
 const state = {
     originalImage: new Image(),
-    currentMode: 'upscale'
+    currentMode: 'upscale',
+    isGif: false,
+    gifFrames: [],
+    gifDelays: [],
+    currentFrame: 0,
+    animationId: null
 };
 
 // Constants
@@ -170,35 +205,93 @@ function updateOutputInfo(originalW, originalH, newW, newH, mode) {
 }
 
 /**
- * Updates the canvas based on current mode and settings
- */
-function updateCanvas() {
-    if (state.currentMode === 'upscale') {
-        upscaleImage();
-    } else {
-        downscaleImage();
-    }
-}
-
-/**
  * Handles the image file processing
  * @param {File} file - The image file to process
  */
-function handleImageFile(file) {
+async function handleImageFile(file) {
     if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-        state.originalImage.onload = updateCanvas;
-        state.originalImage.src = reader.result;
-    };
-    reader.onerror = () => {
-        alert('Error reading file');
-    };
-    reader.readAsDataURL(file);
+    // Reset state
+    state.isGif = false;
+    state.gifFrames = [];
+    state.gifDelays = [];
+    state.currentFrame = 0;
+    if (state.animationId) {
+        cancelAnimationFrame(state.animationId);
+        state.animationId = null;
+    }
+
+    if (file.type === 'image/gif') {
+        state.isGif = true;
+        const arrayBuffer = await file.arrayBuffer();
+        const gif = await parseGIF(arrayBuffer);
+        state.gifFrames = gif.frames;
+        state.gifDelays = gif.delays;
+        
+        // Set canvas size based on first frame
+        const firstFrame = state.gifFrames[0];
+        elements.canvas.width = firstFrame.width;
+        elements.canvas.height = firstFrame.height;
+        
+        // Start animation
+        animateGif();
+    } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+            state.originalImage.onload = updateCanvas;
+            state.originalImage.src = reader.result;
+        };
+        reader.onerror = () => {
+            alert('Error reading file');
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+/**
+ * Animates the GIF frames
+ */
+function animateGif() {
+    if (!state.isGif || state.gifFrames.length === 0) return;
+
+    const frame = state.gifFrames[state.currentFrame];
+    const scale = parseFloat(elements.multiplierInput.value);
+    
+    // Upscale the frame
+    const newW = Math.round(frame.width * scale);
+    const newH = Math.round(frame.height * scale);
+    
+    elements.canvas.width = newW;
+    elements.canvas.height = newH;
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, newW, newH);
+    ctx.drawImage(frame, 0, 0, frame.width, frame.height, 0, 0, newW, newH);
+    
+    updateOutputInfo(frame.width, frame.height, newW, newH, 'Upscaled GIF');
+    
+    // Schedule next frame
+    state.currentFrame = (state.currentFrame + 1) % state.gifFrames.length;
+    state.animationId = setTimeout(animateGif, state.gifDelays[state.currentFrame]);
+}
+
+/**
+ * Updates the canvas based on current mode and settings
+ */
+function updateCanvas() {
+    if (state.isGif) {
+        // For GIFs, we handle animation in animateGif()
+        return;
+    }
+    
+    if (state.currentMode === 'upscale') {
+        upscaleImage();
+    } else {
+        downscaleImage();
+    }
 }
 
 // Event Listeners
@@ -211,11 +304,50 @@ elements.imageInput.addEventListener("change", (e) => {
 
 elements.multiplierInput.addEventListener("input", updateCanvas);
 
-elements.downloadBtn.addEventListener("click", () => {
-    const link = document.createElement("a");
-    link.download = `pixel-perfect-${state.currentMode}d.png`;
-    link.href = elements.canvas.toDataURL("image/png");
-    link.click();
+elements.downloadBtn.addEventListener("click", async () => {
+    if (state.isGif) {
+        // For GIFs, we need to create a new GIF with upscaled frames
+        const scale = parseFloat(elements.multiplierInput.value);
+        const upscaledFrames = state.gifFrames.map(frame => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const newW = Math.round(frame.width * scale);
+            const newH = Math.round(frame.height * scale);
+            canvas.width = newW;
+            canvas.height = newH;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(frame, 0, 0, frame.width, frame.height, 0, 0, newW, newH);
+            return canvas;
+        });
+        
+        // Use gif.js to create the new GIF
+        const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            width: upscaledFrames[0].width,
+            height: upscaledFrames[0].height
+        });
+        
+        upscaledFrames.forEach((frame, i) => {
+            gif.addFrame(frame, {delay: state.gifDelays[i]});
+        });
+        
+        gif.on('finished', function(blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.download = "pixel-perfect-upscaled.gif";
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+        
+        gif.render();
+    } else {
+        const link = document.createElement("a");
+        link.download = `pixel-perfect-${state.currentMode}d.png`;
+        link.href = elements.canvas.toDataURL("image/png");
+        link.click();
+    }
 });
 
 // Drag and drop support
