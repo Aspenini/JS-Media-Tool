@@ -3,65 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A pixel-perfect image upscaler and downscaler tool for pixel art and retro graphics">
-  <meta name="theme-color" content="#1a1a1a">
-  <title>Pixel Perfect Image Tool</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="styles.css">
-  <!-- Add GIF libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/omggif/1.0.0/omggif.min.js"></script>
+  
+  <!-- Primary Meta Tags -->
+  <title>JS Image Tool</title>
+  <meta name="title" content="JS Image Tool">
+  <meta name="description" content="A powerful browser-based tool for pixel-perfect image scaling and diagonal image slicing. Perfect for pixel art, game sprites, and image manipulation.">
+  <meta name="keywords" content="image tool, pixel art, image scaling, image slicer, pixel perfect, browser tool, image manipulation">
+  <meta name="author" content="Aspenini">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://js-image-tool.com/">
+  <meta property="og:title" content="JS Image Tool">
+  <meta property="og:description" content="A powerful browser-based tool for pixel-perfect image scaling and diagonal image slicing. Perfect for pixel art, game sprites, and image manipulation.">
+  <meta property="og:image" content="https://js-image-tool.com/preview.png">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://js-image-tool.com/">
+  <meta property="twitter:title" content="JS Image Tool">
+  <meta property="twitter:description" content="A powerful browser-based tool for pixel-perfect image scaling and diagonal image slicing. Perfect for pixel art, game sprites, and image manipulation.">
+  <meta property="twitter:image" content="https://js-image-tool.com/preview.png">
+  
+  <!-- Discord -->
+  <meta name="theme-color" content="#6366f1">
+  <meta name="discord:card" content="summary_large_image">
+  <meta name="discord:title" content="JS Image Tool">
+  <meta name="discord:description" content="A powerful browser-based tool for pixel-perfect image scaling and diagonal image slicing. Perfect for pixel art, game sprites, and image manipulation.">
+  <meta name="discord:image" content="https://js-image-tool.com/preview.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <main>
-    <header>
-      <h1>🖼️ Pixel Perfect Image Tool</h1>
-    </header>
+  <h1 class="fade-in">JS Image Tool</h1>
+  
+  <div id="tabs" class="fade-in">
+    <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
+    <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
+  </div>
 
-    <!-- Mode Selection -->
-    <section class="mode-selector" role="group" aria-label="Processing mode">
-      <button data-mode="upscale" class="active" aria-pressed="true">Upscale</button>
-      <button data-mode="downscale" aria-pressed="false">Downscale</button>
-    </section>
+  <div id="scalerTab" class="tabcontent active">
+    <h2>Scaler Tool</h2>
+    <div class="input-group">
+      <input type="file" id="scaleInput" accept="image/*">
+      <input type="number" id="scaleFactor" placeholder="Scale Factor (e.g. 2)" step="any">
+      <button onclick="scaleImage()">Scale Image</button>
+    </div>
+    <canvas id="scaleCanvas"></canvas>
+    <a id="scaleDownload" class="download-link" download="scaled.png" style="display: none;">Download Scaled Image</a>
+  </div>
 
-    <!-- File Input -->
-    <section class="file-input-section">
-      <label for="imageInput" class="file-input-label">
-        📁 Choose an image or drag & drop
-      </label>
-      <input type="file" id="imageInput" accept="image/*" aria-label="Select image file">
-    </section>
-
-    <!-- Scale Controls -->
-    <section class="scale-controls">
-      <div class="multiplier-container">
-        <label for="multiplier">Scale Factor:</label>
-        <input type="number" 
-               id="multiplier" 
-               value="2" 
-               step="0.1" 
-               min="0.1" 
-               max="10"
-               aria-label="Scale factor">
+  <div id="slicerTab" class="tabcontent">
+    <h2>Diagonal Image Slicer</h2>
+    <div class="input-group">
+      <input type="file" id="img1" accept="image/*">
+      <input type="file" id="img2" accept="image/*">
+    </div>
+    <div class="input-group">
+      <select id="direction">
+        <option value="left">↙️ Diagonal (Top-left to Bottom-right)</option>
+        <option value="right">↘️ Diagonal (Top-right to Bottom-left)</option>
+      </select>
+      <div class="checkbox-group">
+        <input type="checkbox" id="allDirections">
+        <label for="allDirections">Generate all diagonal variants</label>
       </div>
-    </section>
-
-    <!-- Output Display -->
-    <section class="output-section">
-      <div id="outputInfo" role="status" aria-live="polite">No image loaded</div>
-      <canvas id="canvas" aria-label="Image preview"></canvas>
-    </section>
-
-    <!-- Action Buttons -->
-    <section class="controls">
-      <button class="button" 
-              id="downloadBtn" 
-              style="display:none;"
-              aria-label="Download processed image">
-        Download Result
-      </button>
-    </section>
-  </main>
+      <button id="generate">Generate</button>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="outputList"></div>
+  </div>
 
   <script src="script.js"></script>
 </body>

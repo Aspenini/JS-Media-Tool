@@ -1,382 +1,217 @@
-// DOM Elements
-const elements = {
-    imageInput: document.getElementById("imageInput"),
-    multiplierInput: document.getElementById("multiplier"),
-    canvas: document.getElementById("canvas"),
-    outputInfo: document.getElementById("outputInfo"),
-    downloadBtn: document.getElementById("downloadBtn"),
-    modeButtons: document.querySelectorAll('.mode-selector button'),
-    fileInputLabel: document.querySelector('.file-input-label')
-};
+function openTab(tabId) {
+  // Hide all tabs with animation
+  document.querySelectorAll('.tabcontent').forEach(tab => {
+    if (tab.id !== tabId) {
+      tab.style.opacity = '0';
+      tab.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        tab.style.display = 'none';
+      }, 300);
+    }
+  });
 
-/**
- * Parses a GIF file and returns its frames and delays
- * @param {ArrayBuffer} arrayBuffer - The GIF file as an ArrayBuffer
- * @returns {Promise<Object>} Object containing frames and delays
- */
-async function parseGIF(arrayBuffer) {
-    return new Promise((resolve, reject) => {
-        const gif = new GifReader(new Uint8Array(arrayBuffer));
-        const frames = [];
-        const delays = [];
-        
-        for (let i = 0; i < gif.numFrames(); i++) {
-            const frameInfo = gif.frameInfo(i);
-            const frameCanvas = document.createElement('canvas');
-            frameCanvas.width = frameInfo.width;
-            frameCanvas.height = frameInfo.height;
-            const frameCtx = frameCanvas.getContext('2d');
-            
-            const imageData = frameCtx.createImageData(frameInfo.width, frameInfo.height);
-            gif.decodeAndBlitFrameRGBA(i, imageData.data);
-            frameCtx.putImageData(imageData, 0, 0);
-            
-            frames.push(frameCanvas);
-            delays.push(frameInfo.delay * 10); // Convert to milliseconds
-        }
-        
-        resolve({ frames, delays });
-    });
+  // Update tab buttons
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[onclick="openTab('${tabId}')"]`).classList.add('active');
+
+  // Show selected tab with animation
+  const selectedTab = document.getElementById(tabId);
+  selectedTab.style.display = 'block';
+  // Force a reflow
+  selectedTab.offsetHeight;
+  selectedTab.style.opacity = '1';
+  selectedTab.style.transform = 'translateY(0)';
 }
 
-// Canvas context
-const ctx = elements.canvas.getContext("2d");
+// Scaler Tool Logic
+function scaleImage() {
+  const fileInput = document.getElementById("scaleInput").files[0];
+  const factor = parseFloat(document.getElementById("scaleFactor").value);
+  if (!fileInput || !factor) {
+    showNotification("Please select an image and enter a scale factor.", "error");
+    return;
+  }
 
-// State
-const state = {
-    originalImage: new Image(),
-    currentMode: 'upscale',
-    isGif: false,
-    gifFrames: [],
-    gifDelays: [],
-    currentFrame: 0,
-    animationId: null
-};
-
-// Constants
-const CONSTANTS = {
-    MAX_SCALE: 10,
-    MIN_SCALE: 0.1,
-    DEFAULT_UPSCALE: 2,
-    DEFAULT_DOWNSCALE: 0.5
-};
-
-/**
- * Sets the current processing mode and updates UI accordingly
- * @param {string} mode - The mode to set ('upscale' or 'downscale')
- */
-function setMode(mode) {
-    state.currentMode = mode;
-    
-    // Update button states
-    elements.modeButtons.forEach(btn => {
-        const isActive = btn.dataset.mode === mode;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-pressed', isActive);
-    });
-    
-    // Update multiplier constraints
-    if (mode === 'upscale') {
-        elements.multiplierInput.min = '1';
-        elements.multiplierInput.max = CONSTANTS.MAX_SCALE.toString();
-        if (parseFloat(elements.multiplierInput.value) < 1) {
-            elements.multiplierInput.value = CONSTANTS.DEFAULT_UPSCALE.toString();
-        }
-    } else {
-        elements.multiplierInput.min = CONSTANTS.MIN_SCALE.toString();
-        elements.multiplierInput.max = '1';
-        if (parseFloat(elements.multiplierInput.value) > 1) {
-            elements.multiplierInput.value = CONSTANTS.DEFAULT_DOWNSCALE.toString();
-        }
-    }
-    
-    if (state.originalImage.src) {
-        updateCanvas();
-    }
-}
-
-/**
- * Calculates the average color of a block of pixels
- * @param {Uint8ClampedArray} pixels - The image pixel data
- * @param {number} startX - Starting X coordinate
- * @param {number} startY - Starting Y coordinate
- * @param {number} blockSize - Size of the block to average
- * @returns {Object} The average color values
- */
-function getAverageColor(pixels, startX, startY, blockSize) {
-    let r = 0, g = 0, b = 0, a = 0;
-    let count = 0;
-    
-    for (let y = startY; y < startY + blockSize; y++) {
-        for (let x = startX; x < startX + blockSize; x++) {
-            const idx = (y * state.originalImage.width + x) * 4;
-            r += pixels[idx];
-            g += pixels[idx + 1];
-            b += pixels[idx + 2];
-            a += pixels[idx + 3];
-            count++;
-        }
-    }
-    
-    return {
-        r: Math.round(r / count),
-        g: Math.round(g / count),
-        b: Math.round(b / count),
-        a: Math.round(a / count)
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById("scaleCanvas");
+      const ctx = canvas.getContext("2d");
+      
+      // Set canvas dimensions
+      canvas.width = img.width * factor;
+      canvas.height = img.height * factor;
+      
+      // Disable image smoothing for pixel-perfect scaling
+      ctx.imageSmoothingEnabled = false;
+      
+      // Draw the image at the exact size
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      const out = canvas.toDataURL("image/png");
+      const link = document.getElementById("scaleDownload");
+      link.href = out;
+      
+      // Get original filename without extension
+      const originalName = fileInput.name.replace(/\.[^/.]+$/, "");
+      link.download = `${originalName}_upscaled.png`;
+      
+      link.style.display = "inline-block";
+      showNotification("Image scaled successfully!", "success");
     };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(fileInput);
 }
 
-/**
- * Downscales the image by averaging pixel blocks
- */
-function downscaleImage() {
-    const scale = parseFloat(elements.multiplierInput.value);
-    if (isNaN(scale) || scale <= 0 || scale >= 1) return;
+// Slicer Tool Logic
+let image1 = null;
+let image2 = null;
 
-    const w = state.originalImage.width;
-    const h = state.originalImage.height;
-    const blockSize = Math.round(1 / scale);
-    const newW = Math.round(w / blockSize);
-    const newH = Math.round(h / blockSize);
+document.getElementById("img1").onchange = e => loadImage(e.target.files[0], 1);
+document.getElementById("img2").onchange = e => loadImage(e.target.files[0], 2);
+document.getElementById("allDirections").onchange = e => {
+  document.getElementById("direction").disabled = e.target.checked;
+};
 
-    elements.canvas.width = newW;
-    elements.canvas.height = newH;
-
-    // Get image data
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = w;
-    tempCanvas.height = h;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(state.originalImage, 0, 0);
-    const imageData = tempCtx.getImageData(0, 0, w, h);
-    const pixels = imageData.data;
-
-    // Create new image data for downscaled image
-    const newImageData = ctx.createImageData(newW, newH);
-    const newPixels = newImageData.data;
-
-    // Process each block
-    for (let y = 0; y < newH; y++) {
-        for (let x = 0; x < newW; x++) {
-            const blockX = x * blockSize;
-            const blockY = y * blockSize;
-            const color = getAverageColor(pixels, blockX, blockY, blockSize);
-            
-            const idx = (y * newW + x) * 4;
-            newPixels[idx] = color.r;
-            newPixels[idx + 1] = color.g;
-            newPixels[idx + 2] = color.b;
-            newPixels[idx + 3] = color.a;
-        }
-    }
-
-    ctx.putImageData(newImageData, 0, 0);
-    updateOutputInfo(w, h, newW, newH, 'Downscaled');
+function loadImage(file, slot) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      if (slot === 1) image1 = img;
+      else image2 = img;
+      showNotification(`Image ${slot} loaded successfully!`, "success");
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 }
 
-/**
- * Upscales the image using nearest-neighbor interpolation
- */
-function upscaleImage() {
-    const scale = parseFloat(elements.multiplierInput.value);
-    if (isNaN(scale) || scale <= 0 || !state.originalImage.src) return;
-
-    const w = state.originalImage.width;
-    const h = state.originalImage.height;
-    const newW = Math.round(w * scale);
-    const newH = Math.round(h * scale);
-
-    elements.canvas.width = newW;
-    elements.canvas.height = newH;
-
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, newW, newH);
-    ctx.drawImage(state.originalImage, 0, 0, w, h, 0, 0, newW, newH);
-
-    updateOutputInfo(w, h, newW, newH, 'Upscaled');
+function extractNumber(name) {
+  const match = name.match(/\d+/);
+  return match ? match[0] : "00";
 }
 
-/**
- * Updates the output information display
- */
-function updateOutputInfo(originalW, originalH, newW, newH, mode) {
-    elements.outputInfo.innerText = `Original: ${originalW}x${originalH} → ${mode}: ${newW}x${newH}`;
-    elements.downloadBtn.style.display = "inline-block";
+function drawDiagonal(imgA, imgB, width, height, direction) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  ctx.drawImage(imgA, 0, 0);
+  ctx.save();
+  ctx.beginPath();
+
+  if (direction === "tl2br") {
+    ctx.moveTo(0, 0);
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
+  } else if (direction === "tr2bl") {
+    ctx.moveTo(canvas.width, 0);
+    ctx.lineTo(0, canvas.height);
+    ctx.lineTo(canvas.width, canvas.height);
+  }
+
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(imgB, 0, 0);
+  ctx.restore();
+
+  return canvas.toDataURL("image/png");
 }
 
-/**
- * Handles the image file processing
- * @param {File} file - The image file to process
- */
-async function handleImageFile(file) {
-    if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-    }
+document.getElementById("generate").onclick = () => {
+  if (!image1 || !image2) {
+    showNotification("Please upload both images first.", "error");
+    return;
+  }
 
-    // Reset state
-    state.isGif = false;
-    state.gifFrames = [];
-    state.gifDelays = [];
-    state.currentFrame = 0;
-    if (state.animationId) {
-        cancelAnimationFrame(state.animationId);
-        state.animationId = null;
-    }
+  const allDirections = document.getElementById("allDirections").checked;
+  const dirSelect = document.getElementById("direction");
+  const file1 = document.getElementById("img1").files[0];
+  const file2 = document.getElementById("img2").files[0];
+  const num1 = extractNumber(file1.name);
+  const num2 = extractNumber(file2.name);
+  const w = image1.width;
+  const h = image1.height;
+  const outputList = document.getElementById("outputList");
+  outputList.innerHTML = "";
 
-    if (file.type === 'image/gif') {
-        state.isGif = true;
-        const arrayBuffer = await file.arrayBuffer();
-        const gif = await parseGIF(arrayBuffer);
-        state.gifFrames = gif.frames;
-        state.gifDelays = gif.delays;
-        
-        // Set canvas size based on first frame
-        const firstFrame = state.gifFrames[0];
-        elements.canvas.width = firstFrame.width;
-        elements.canvas.height = firstFrame.height;
-        
-        // Start animation
-        animateGif();
-    } else {
-        const reader = new FileReader();
-        reader.onload = () => {
-            state.originalImage.onload = updateCanvas;
-            state.originalImage.src = reader.result;
-        };
-        reader.onerror = () => {
-            alert('Error reading file');
-        };
-        reader.readAsDataURL(file);
-    }
-}
+  if (allDirections) {
+    const variants = [
+      { a: image1, b: image2, name: `tl2br_${num1}_${num2}.png`, dir: "tl2br" },
+      { a: image2, b: image1, name: `tl2br_${num2}_${num1}.png`, dir: "tl2br" },
+      { a: image1, b: image2, name: `tr2bl_${num1}_${num2}.png`, dir: "tr2bl" },
+      { a: image2, b: image1, name: `tr2bl_${num2}_${num1}.png`, dir: "tr2bl" },
+    ];
 
-/**
- * Animates the GIF frames
- */
-function animateGif() {
-    if (!state.isGif || state.gifFrames.length === 0) return;
-
-    const frame = state.gifFrames[state.currentFrame];
-    const scale = parseFloat(elements.multiplierInput.value);
-    
-    // Upscale the frame
-    const newW = Math.round(frame.width * scale);
-    const newH = Math.round(frame.height * scale);
-    
-    elements.canvas.width = newW;
-    elements.canvas.height = newH;
-    
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, newW, newH);
-    ctx.drawImage(frame, 0, 0, frame.width, frame.height, 0, 0, newW, newH);
-    
-    updateOutputInfo(frame.width, frame.height, newW, newH, 'Upscaled GIF');
-    
-    // Schedule next frame
-    state.currentFrame = (state.currentFrame + 1) % state.gifFrames.length;
-    state.animationId = setTimeout(animateGif, state.gifDelays[state.currentFrame]);
-}
-
-/**
- * Updates the canvas based on current mode and settings
- */
-function updateCanvas() {
-    if (state.isGif) {
-        // For GIFs, we handle animation in animateGif()
-        return;
-    }
-    
-    if (state.currentMode === 'upscale') {
-        upscaleImage();
-    } else {
-        downscaleImage();
-    }
-}
-
-// Event Listeners
-elements.imageInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        handleImageFile(file);
-    }
-});
-
-elements.multiplierInput.addEventListener("input", updateCanvas);
-
-elements.downloadBtn.addEventListener("click", async () => {
-    if (state.isGif) {
-        // For GIFs, we need to create a new GIF with upscaled frames
-        const scale = parseFloat(elements.multiplierInput.value);
-        const upscaledFrames = state.gifFrames.map(frame => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const newW = Math.round(frame.width * scale);
-            const newH = Math.round(frame.height * scale);
-            canvas.width = newW;
-            canvas.height = newH;
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(frame, 0, 0, frame.width, frame.height, 0, 0, newW, newH);
-            return canvas;
-        });
-        
-        // Use gif.js to create the new GIF
-        const gif = new GIF({
-            workers: 2,
-            quality: 10,
-            width: upscaledFrames[0].width,
-            height: upscaledFrames[0].height
-        });
-        
-        upscaledFrames.forEach((frame, i) => {
-            gif.addFrame(frame, {delay: state.gifDelays[i]});
-        });
-        
-        gif.on('finished', function(blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.download = "pixel-perfect-upscaled.gif";
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-        });
-        
-        gif.render();
-    } else {
+    variants.forEach((variant, index) => {
+      setTimeout(() => {
+        const dataURL = drawDiagonal(variant.a, variant.b, w, h, variant.dir);
         const link = document.createElement("a");
-        link.download = `pixel-perfect-${state.currentMode}d.png`;
-        link.href = elements.canvas.toDataURL("image/png");
-        link.click();
-    }
-});
+        link.href = dataURL;
+        link.download = variant.name;
+        link.className = "download-link fade-in";
+        link.textContent = `Download ${variant.name}`;
+        outputList.appendChild(link);
+      }, index * 200); // Stagger the animations
+    });
+  } else {
+    const direction = dirSelect.value === "left" ? "tl2br" : "tr2bl";
+    const dataURL = drawDiagonal(image1, image2, w, h, direction);
+    const name = `${direction}_${num1}_${num2}.png`;
+    const link = document.createElement("a");
+    link.href = dataURL;
+    link.download = name;
+    link.className = "download-link fade-in";
+    link.textContent = `Download ${name}`;
+    outputList.appendChild(link);
+  }
 
-// Drag and drop support
-document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    elements.fileInputLabel.style.background = 'var(--primary)';
-    elements.fileInputLabel.style.borderColor = 'var(--primary)';
-});
+  showNotification("Images generated successfully!", "success");
+};
 
-document.addEventListener('dragleave', () => {
-    elements.fileInputLabel.style.background = 'var(--bg-light)';
-    elements.fileInputLabel.style.borderColor = 'var(--border)';
-});
-
-document.addEventListener('drop', (e) => {
-    e.preventDefault();
-    elements.fileInputLabel.style.background = 'var(--bg-light)';
-    elements.fileInputLabel.style.borderColor = 'var(--border)';
-    
-    const file = e.dataTransfer.files[0];
-    if (file) {
-        handleImageFile(file);
-    }
-});
-
-// Initialize mode selector
-elements.modeButtons.forEach(btn => {
-    btn.addEventListener('click', () => setMode(btn.dataset.mode));
-});
-
-// Set initial mode
-setMode('upscale'); 
+// Notification system
+function showNotification(message, type = "info") {
+  const notification = document.createElement("div");
+  notification.className = `notification ${type} fade-in`;
+  notification.textContent = message;
+  
+  // Add styles for the notification
+  notification.style.position = "fixed";
+  notification.style.bottom = "20px";
+  notification.style.right = "20px";
+  notification.style.padding = "1rem 2rem";
+  notification.style.borderRadius = "8px";
+  notification.style.color = "white";
+  notification.style.fontWeight = "500";
+  notification.style.zIndex = "1000";
+  notification.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+  
+  // Set background color based on type
+  switch(type) {
+    case "success":
+      notification.style.backgroundColor = "var(--success)";
+      break;
+    case "error":
+      notification.style.backgroundColor = "#ef4444";
+      break;
+    default:
+      notification.style.backgroundColor = "var(--primary)";
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Remove notification after 3 seconds
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    notification.style.transform = "translateY(20px)";
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 3000);
+}
