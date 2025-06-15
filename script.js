@@ -215,3 +215,197 @@ function showNotification(message, type = "info") {
     }, 300);
   }, 3000);
 }
+
+// Audio Processing Logic
+let audioContext = null;
+let audioBuffer = null;
+
+async function processAudio() {
+  const fileInput = document.getElementById("audioInput").files[0];
+  const effect = document.getElementById("audioEffect").value;
+  
+  if (!fileInput) {
+    showNotification("Please select an audio file first.", "error");
+    return;
+  }
+
+  try {
+    // Initialize audio context if not already done
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // Read the audio file
+    const arrayBuffer = await fileInput.arrayBuffer();
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    // Process based on selected effect
+    let processedBuffer;
+    switch(effect) {
+      case 'vintageRadio':
+        processedBuffer = await applyVintageRadioEffect(audioBuffer);
+        break;
+      default:
+        throw new Error("Unknown effect selected");
+    }
+
+    // Create audio element and download link
+    const audioElement = document.getElementById("processedAudio");
+    const downloadLink = document.getElementById("audioDownload");
+    
+    // Convert to WAV and create download link
+    const wavBlob = audioBufferToWavBlob(processedBuffer);
+    const url = URL.createObjectURL(wavBlob);
+    
+    audioElement.src = url;
+    downloadLink.href = url;
+    downloadLink.download = `${fileInput.name.replace(/\.[^/.]+$/, "")}_${effect}.wav`;
+    
+    audioElement.style.display = "block";
+    downloadLink.style.display = "inline-block";
+    
+    showNotification("Audio processed successfully!", "success");
+  } catch (error) {
+    console.error("Error processing audio:", error);
+    showNotification("Error processing audio: " + error.message, "error");
+  }
+}
+
+function audioBufferToWavBlob(buffer) {
+  // Adapted from: https://github.com/Jam3/audiobuffer-to-wav
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const format = 1; // PCM
+  const bitDepth = 16;
+  const samples = buffer.length;
+  const blockAlign = numChannels * bitDepth / 8;
+  const byteRate = sampleRate * blockAlign;
+  const wavBuffer = new ArrayBuffer(44 + samples * blockAlign);
+  const view = new DataView(wavBuffer);
+
+  // Write WAV header
+  function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  }
+
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + samples * blockAlign, true);
+  writeString(view, 8, 'WAVE');
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, format, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitDepth, true);
+  writeString(view, 36, 'data');
+  view.setUint32(40, samples * blockAlign, true);
+
+  // Write interleaved PCM samples
+  let offset = 44;
+  for (let i = 0; i < samples; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      let sample = buffer.getChannelData(ch)[i];
+      sample = Math.max(-1, Math.min(1, sample));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+
+  return new Blob([wavBuffer], { type: 'audio/wav' });
+}
+
+async function applyVintageRadioEffect(buffer) {
+  // Always create a new OfflineAudioContext for each run
+  const offlineContext = new OfflineAudioContext(
+    1, // mono output
+    buffer.length,
+    buffer.sampleRate
+  );
+
+  // Create a new mono buffer for each run
+  const monoBuffer = offlineContext.createBuffer(1, buffer.length, buffer.sampleRate);
+  const inputData = buffer.numberOfChannels > 1
+    ? Array.from({length: buffer.numberOfChannels}, (_, ch) => buffer.getChannelData(ch))
+    : [buffer.getChannelData(0)];
+  const monoData = monoBuffer.getChannelData(0);
+  for (let i = 0; i < buffer.length; i++) {
+    let sum = 0;
+    for (let ch = 0; ch < inputData.length; ch++) sum += inputData[ch][i];
+    monoData[i] = sum / inputData.length;
+  }
+
+  // Create a new source node for each run
+  const source = offlineContext.createBufferSource();
+  source.buffer = monoBuffer;
+
+  // Bandpass filter (200Hz - 6000Hz)
+  const bandpass = offlineContext.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = 3000;
+  bandpass.Q.value = 0.7;
+  source.connect(bandpass);
+
+  // Compression
+  const compressor = offlineContext.createDynamicsCompressor();
+  compressor.threshold.value = -24;
+  compressor.knee.value = 12;
+  compressor.ratio.value = 4;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.25;
+  bandpass.connect(compressor);
+
+  // Harmonic saturation (tube warmth)
+  const saturation = offlineContext.createWaveShaper();
+  saturation.curve = createSaturationCurve(0.25);
+  compressor.connect(saturation);
+
+  // Create static noise buffer (white noise, full duration)
+  const noiseBuffer = offlineContext.createBuffer(1, buffer.length, buffer.sampleRate);
+  const noiseData = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < buffer.length; i++) {
+    noiseData[i] = (Math.random() * 2 - 1) * 0.008; // Quieter static
+  }
+  // Create a new noise source node for each run
+  const noiseSource = offlineContext.createBufferSource();
+  noiseSource.buffer = noiseBuffer;
+
+  // Mix noise and signal
+  const mixGain = offlineContext.createGain();
+  mixGain.gain.value = 1.0;
+  saturation.connect(mixGain);
+  noiseSource.connect(mixGain);
+  mixGain.connect(offlineContext.destination);
+
+  // Start sources (only once per node)
+  source.start(0);
+  noiseSource.start(0);
+
+  // Render
+  return await offlineContext.startRendering();
+}
+
+function createSaturationCurve(amount) {
+  const samples = 44100;
+  const curve = new Float32Array(samples);
+  for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = Math.tanh(x * amount) / Math.tanh(amount);
+  }
+  return curve;
+}
+
+function createNoiseBuffer(context) {
+  const bufferSize = context.sampleRate * 0.1; // 100ms of noise
+  const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
+  const data = buffer.getChannelData(0);
+  
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  
+  return buffer;
+}

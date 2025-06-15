@@ -49,6 +49,7 @@
   <div id="tabs" class="fade-in">
     <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
     <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
+    <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
   </div>
 
   <div id="scalerTab" class="tabcontent active">
@@ -81,6 +82,21 @@
     </div>
     <canvas id="canvas" style="display:none;"></canvas>
     <div id="outputList"></div>
+  </div>
+
+  <div id="audioTab" class="tabcontent">
+    <h2>Audio Effects</h2>
+    <div class="input-group">
+      <input type="file" id="audioInput" accept="audio/*">
+      <select id="audioEffect">
+        <option value="vintageRadio">Vintage Radio (1940s-1950s)</option>
+      </select>
+      <button onclick="processAudio()">Generate Effect</button>
+    </div>
+    <div id="audioPreview" class="audio-preview">
+      <audio id="processedAudio" controls style="display: none;"></audio>
+      <a id="audioDownload" class="download-link" download="processed_audio.mp3" style="display: none;">Download Processed Audio</a>
+    </div>
   </div>
 
   <script src="script.js"></script>

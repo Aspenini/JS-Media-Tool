@@ -230,3 +230,31 @@ input[type="checkbox"] {
 .fade-in {
   animation: fadeIn 0.3s ease forwards;
 }
+
+.audio-preview {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.audio-preview audio {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 8px;
+  background: var(--background);
+}
+
+.audio-preview audio::-webkit-media-controls-panel {
+  background: var(--surface);
+}
+
+.audio-preview audio::-webkit-media-controls-current-time-display,
+.audio-preview audio::-webkit-media-controls-time-remaining-display {
+  color: var(--text);
+}
