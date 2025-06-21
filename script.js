@@ -409,3 +409,242 @@ function createNoiseBuffer(context) {
   
   return buffer;
 }
+
+// Video Creator Logic
+let videoImages = [];
+let mediaRecorder = null;
+let recordedChunks = [];
+
+function loadVideoImages() {
+  const fileInput = document.getElementById('videoImages');
+  const files = Array.from(fileInput.files);
+  
+  if (files.length === 0) {
+    showNotification("Please select at least one image.", "error");
+    return;
+  }
+  
+  if (files.length > 50) {
+    showNotification("Please select 50 or fewer images for better performance.", "error");
+    return;
+  }
+  
+  videoImages = [];
+  const imageItemsContainer = document.getElementById('imageItems');
+  imageItemsContainer.innerHTML = '';
+  
+  files.forEach((file, index) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const imageData = {
+          file: file,
+          image: img,
+          index: index,
+          name: file.name,
+          size: formatFileSize(file.size)
+        };
+        videoImages.push(imageData);
+        
+        // Create image item element
+        const imageItem = createImageItem(imageData);
+        imageItemsContainer.appendChild(imageItem);
+        
+        // If this is the last image, show the image list
+        if (videoImages.length === files.length) {
+          document.getElementById('imageList').style.display = 'block';
+          setupDragAndDrop();
+          showNotification(`${files.length} images loaded successfully!`, "success");
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function createImageItem(imageData) {
+  const item = document.createElement('div');
+  item.className = 'image-item fade-in';
+  item.draggable = true;
+  item.dataset.index = imageData.index;
+  
+  item.innerHTML = `
+    <div class="image-item-index">${imageData.index + 1}</div>
+    <img src="${imageData.image.src}" alt="${imageData.name}">
+    <div class="image-item-info">
+      <div class="image-item-name">${imageData.name}</div>
+      <div class="image-item-size">${imageData.size}</div>
+    </div>
+  `;
+  
+  return item;
+}
+
+function setupDragAndDrop() {
+  const imageItems = document.querySelectorAll('.image-item');
+  
+  imageItems.forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('drop', handleDrop);
+  });
+}
+
+function handleDragStart(e) {
+  e.target.classList.add('dragging');
+  e.dataTransfer.setData('text/plain', e.target.dataset.index);
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+  const dropIndex = parseInt(e.target.closest('.image-item').dataset.index);
+  
+  if (draggedIndex !== dropIndex) {
+    // Reorder the videoImages array
+    const draggedItem = videoImages[draggedIndex];
+    videoImages.splice(draggedIndex, 1);
+    videoImages.splice(dropIndex, 0, draggedItem);
+    
+    // Update the display
+    updateImageList();
+  }
+}
+
+function updateImageList() {
+  const imageItemsContainer = document.getElementById('imageItems');
+  imageItemsContainer.innerHTML = '';
+  
+  videoImages.forEach((imageData, index) => {
+    imageData.index = index;
+    const imageItem = createImageItem(imageData);
+    imageItemsContainer.appendChild(imageItem);
+  });
+  
+  setupDragAndDrop();
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+async function createVideo() {
+  if (videoImages.length === 0) {
+    showNotification("Please load images first.", "error");
+    return;
+  }
+  
+  const format = document.getElementById('videoFormat').value;
+  const numImages = videoImages.length;
+  
+  // Calculate duration and frame rate based on number of images
+  let duration, fps;
+  if (numImages <= 30) {
+    duration = 1; // 1 second
+    fps = numImages; // FPS equals number of images
+  } else {
+    duration = 2; // 2 seconds
+    fps = Math.ceil(numImages / 2); // FPS is half the number of images, rounded up
+  }
+  
+  const frameDuration = duration * 1000 / numImages; // Duration per frame in milliseconds
+  
+  showNotification(`Creating ${duration}s video at ${fps} FPS... This may take a moment.`, "info");
+  
+  try {
+    // Create canvas for video frames
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to match the first image
+    const firstImage = videoImages[0].image;
+    canvas.width = firstImage.width;
+    canvas.height = firstImage.height;
+    
+    // Create MediaRecorder
+    const stream = canvas.captureStream(fps);
+    const mimeType = format === 'mp4' ? 'video/mp4' : 'video/webm';
+    
+    // Check if the format is supported
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      const fallbackMimeType = 'video/webm';
+      showNotification(`MP4 not supported, using WebM instead.`, "info");
+      mediaRecorder = new MediaRecorder(stream, { mimeType: fallbackMimeType });
+    } else {
+      mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+    }
+    
+    recordedChunks = [];
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      
+      // Show video preview
+      const videoElement = document.getElementById('generatedVideo');
+      videoElement.src = url;
+      videoElement.style.display = 'block';
+      
+      // Create download link
+      const downloadLink = document.getElementById('videoDownload');
+      downloadLink.href = url;
+      downloadLink.download = `video_${numImages}images_${fps}fps_${duration}s.${format}`;
+      downloadLink.style.display = 'inline-block';
+      
+      document.getElementById('videoPreview').style.display = 'block';
+      showNotification(`Video created successfully! ${duration}s at ${fps} FPS`, "success");
+    };
+    
+    // Start recording
+    mediaRecorder.start();
+    
+    // Draw each image frame
+    for (let i = 0; i < videoImages.length; i++) {
+      const imageData = videoImages[i];
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw image centered on canvas
+      const img = imageData.image;
+      const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const scaledWidth = img.width * scale;
+      const scaledHeight = img.height * scale;
+      const x = (canvas.width - scaledWidth) / 2;
+      const y = (canvas.height - scaledHeight) / 2;
+      
+      ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+      
+      // Wait for the frame duration
+      await new Promise(resolve => setTimeout(resolve, frameDuration));
+    }
+    
+    // Stop recording
+    mediaRecorder.stop();
+    
+  } catch (error) {
+    console.error("Error creating video:", error);
+    showNotification("Error creating video: " + error.message, "error");
+  }
+}

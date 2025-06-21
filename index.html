@@ -50,6 +50,7 @@
     <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
     <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
     <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
+    <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
   </div>
 
   <div id="scalerTab" class="tabcontent active">
@@ -96,6 +97,29 @@
     <div id="audioPreview" class="audio-preview">
       <audio id="processedAudio" controls style="display: none;"></audio>
       <a id="audioDownload" class="download-link" download="processed_audio.mp3" style="display: none;">Download Processed Audio</a>
+    </div>
+  </div>
+
+  <div id="videoTab" class="tabcontent">
+    <h2>Image to Video</h2>
+    <div class="input-group">
+      <input type="file" id="videoImages" accept="image/*" multiple>
+      <select id="videoFormat">
+        <option value="mp4">MP4</option>
+        <option value="webm">WebM</option>
+      </select>
+      <button onclick="loadVideoImages()">Load Images</button>
+    </div>
+    
+    <div id="imageList" class="image-list" style="display: none;">
+      <h3>Image Order (Drag to reorder)</h3>
+      <div id="imageItems" class="image-items"></div>
+      <button onclick="createVideo()" class="generate-btn">Generate Video</button>
+    </div>
+    
+    <div id="videoPreview" class="video-preview" style="display: none;">
+      <video id="generatedVideo" controls style="display: none;"></video>
+      <a id="videoDownload" class="download-link" download="generated_video.mp4" style="display: none;">Download Video</a>
     </div>
   </div>
 
