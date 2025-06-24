@@ -375,10 +375,9 @@ input[type="checkbox"] {
 }
 
 .video-preview video {
-  width: 100%;
-  max-width: 600px;
-  border-radius: 8px;
-  background: var(--background);
+  max-width: 100%;
+  border-radius: 12px;
+  margin-top: 1rem;
 }
 
 /* Scrollbar styling for image list */
@@ -398,4 +397,70 @@ input[type="checkbox"] {
 
 .image-items::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
+}
+
+/* CSV Visualizer Styles */
+.csv-preview {
+  margin-top: 2rem;
+}
+
+.table-container {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+#csvTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+}
+
+#csvTable th,
+#csvTable td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+#csvTable th {
+  background: var(--primary);
+  color: var(--text);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#csvTable tr:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.chart-controls {
+  margin-bottom: 2rem;
+}
+
+.chart-controls label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.chart-controls select {
+  min-width: 120px;
+}
+
+.chart-container {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+#chartCanvas {
+  max-width: 100%;
+  height: auto;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: white;
 }

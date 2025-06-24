@@ -42,6 +42,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
   <h1 class="fade-in">JS Media Tool</h1>
@@ -51,6 +52,7 @@
     <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
     <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
     <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
+    <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
   </div>
 
   <div id="scalerTab" class="tabcontent active">
@@ -120,6 +122,19 @@
     <div id="videoPreview" class="video-preview" style="display: none;">
       <video id="generatedVideo" controls style="display: none;"></video>
       <a id="videoDownload" class="download-link" download="generated_video.mp4" style="display: none;">Download Video</a>
+    </div>
+  </div>
+
+  <div id="csvTab" class="tabcontent">
+    <h2>CSV to Image</h2>
+    <div class="input-group">
+      <input type="file" id="csvInput" accept=".csv">
+      <button id="generateBtn" onclick="generateTableImage()" disabled>Generate</button>
+    </div>
+    <div id="imageResult" class="image-result" style="display: none; text-align: center; margin-top: 2rem;">
+      <img id="tableImage" style="max-width: 100%; border-radius: 12px; border: 2px solid var(--border); background: white;" />
+      <br />
+      <a id="downloadTableImage" class="download-link" download="csv_table_full.png" style="margin-top: 1rem;">Download Table as Image</a>
     </div>
   </div>
 
