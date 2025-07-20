@@ -464,3 +464,328 @@ input[type="checkbox"] {
   border-radius: 12px;
   background: white;
 }
+
+/* Resize Tab Styles */
+.resize-upload-section {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.upload-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: var(--text);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.upload-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.upload-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.filter-btn, .clear-btn {
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-btn:hover, .clear-btn:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.file-info {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.resize-settings, .export-settings {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.resize-settings h3, .export-settings h3 {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.size-inputs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.size-inputs .input-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.size-inputs label {
+  display: block;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.size-inputs input[type="number"] {
+  width: 100%;
+  background: var(--background);
+  color: var(--text);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.size-inputs input[type="number"]:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.size-inputs select {
+  background: var(--background);
+  color: var(--text);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.size-inputs select:hover {
+  border-color: var(--primary);
+}
+
+.unit-display {
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-left: 0.5rem;
+  align-self: center;
+}
+
+.background-fill-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.background-options {
+  margin-top: 1rem;
+  margin-left: 2rem;
+  transition: opacity 0.3s ease;
+}
+
+.radio-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.radio-group input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+.radio-group input[type="radio"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-group label:has(input[type="radio"]:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.help-icon {
+  color: var(--text-secondary);
+  cursor: help;
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.color-picker-container {
+  margin-top: 1rem;
+  margin-left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.color-picker-container input[type="color"] {
+  width: 50px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+
+.export-btn {
+  background: var(--success);
+  color: var(--text);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.export-btn:hover {
+  background: #16a34a;
+  transform: translateY(-2px);
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.image-preview-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.image-preview-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.image-preview-header {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.image-preview-thumbnail {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.image-preview-controls {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.control-btn {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  background: var(--primary);
+}
+
+.image-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.image-preview-name {
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.image-preview-dimensions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.dimension-arrow {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.image-preview-status {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.status-ready {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--success);
+}
+
+.status-processing {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary);
+}
+
+.status-error {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}

@@ -798,6 +798,461 @@ function parseCSVLine(line) {
   return result;
 }
 
+// Resize Tab Logic
+let resizeImages = [];
+let currentAspectRatio = null;
+
+// Event listeners for resize functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Background fill checkbox handler
+  const backgroundFillCheckbox = document.getElementById('backgroundFill');
+  if (backgroundFillCheckbox) {
+    backgroundFillCheckbox.addEventListener('change', function() {
+      updateBackgroundOptionsVisibility();
+    });
+  }
+
+  // Background fill radio button handlers
+  const pickColorRadio = document.getElementById('pickColor');
+  const transparentRadio = document.getElementById('transparent');
+  const colorPickerContainer = document.querySelector('.color-picker-container');
+  
+  if (pickColorRadio && transparentRadio && colorPickerContainer) {
+    pickColorRadio.addEventListener('change', function() {
+      if (this.checked && backgroundFillCheckbox && backgroundFillCheckbox.checked) {
+        colorPickerContainer.style.display = 'flex';
+      }
+    });
+    
+    transparentRadio.addEventListener('change', function() {
+      if (this.checked) {
+        colorPickerContainer.style.display = 'none';
+      }
+    });
+  }
+
+  // Lock aspect ratio handler
+  const lockAspectRatio = document.getElementById('lockAspectRatio');
+  const resizeWidth = document.getElementById('resizeWidth');
+  const resizeHeight = document.getElementById('resizeHeight');
+  
+  if (lockAspectRatio && resizeWidth && resizeHeight) {
+    // Set lock aspect ratio to checked by default
+    lockAspectRatio.checked = true;
+    updateBackgroundFillVisibility();
+    
+    lockAspectRatio.addEventListener('change', function() {
+      updateBackgroundFillVisibility();
+      if (this.checked && currentAspectRatio) {
+        // When locking, recalculate height based on current width
+        const currentWidth = parseInt(resizeWidth.value) || 256;
+        const newHeight = Math.round(currentWidth / currentAspectRatio);
+        resizeHeight.value = newHeight;
+      }
+    });
+    
+    resizeWidth.addEventListener('input', function() {
+      if (lockAspectRatio.checked && currentAspectRatio) {
+        const newWidth = parseInt(this.value) || 0;
+        const newHeight = Math.round(newWidth / currentAspectRatio);
+        resizeHeight.value = newHeight;
+        updateResizeImageGrid();
+      }
+    });
+    
+    resizeHeight.addEventListener('input', function() {
+      if (lockAspectRatio.checked && currentAspectRatio) {
+        const newHeight = parseInt(this.value) || 0;
+        const newWidth = Math.round(newHeight * currentAspectRatio);
+        resizeWidth.value = newWidth;
+        updateResizeImageGrid();
+      }
+    });
+  }
+});
+
+function updateBackgroundFillVisibility() {
+  const lockAspectRatio = document.getElementById('lockAspectRatio');
+  const backgroundFillCheckbox = document.getElementById('backgroundFill');
+  const backgroundOptions = document.querySelector('.background-options');
+  const colorPickerContainer = document.querySelector('.color-picker-container');
+  const pickColorRadio = document.getElementById('pickColor');
+  const transparentRadio = document.getElementById('transparent');
+  
+  if (lockAspectRatio && backgroundFillCheckbox && backgroundOptions) {
+    if (lockAspectRatio.checked) {
+      // Lock aspect ratio is ON - disable background fill options
+      backgroundFillCheckbox.disabled = true;
+      backgroundFillCheckbox.checked = false;
+      backgroundOptions.style.opacity = '0.5';
+      backgroundOptions.style.pointerEvents = 'none';
+      if (colorPickerContainer) {
+        colorPickerContainer.style.display = 'none';
+      }
+      // Disable radio buttons
+      if (pickColorRadio) pickColorRadio.disabled = true;
+      if (transparentRadio) transparentRadio.disabled = true;
+    } else {
+      // Lock aspect ratio is OFF - enable background fill options
+      backgroundFillCheckbox.disabled = false;
+      backgroundFillCheckbox.checked = true; // Enable by default when unlocked
+      updateBackgroundOptionsVisibility();
+    }
+  }
+}
+
+function updateBackgroundOptionsVisibility() {
+  const backgroundFillCheckbox = document.getElementById('backgroundFill');
+  const backgroundOptions = document.querySelector('.background-options');
+  const colorPickerContainer = document.querySelector('.color-picker-container');
+  const pickColorRadio = document.getElementById('pickColor');
+  const transparentRadio = document.getElementById('transparent');
+  
+  if (backgroundFillCheckbox && backgroundOptions) {
+    if (backgroundFillCheckbox.checked) {
+      // Background fill is ON - enable radio buttons
+      backgroundOptions.style.opacity = '1';
+      backgroundOptions.style.pointerEvents = 'auto';
+      if (pickColorRadio) pickColorRadio.disabled = false;
+      if (transparentRadio) transparentRadio.disabled = false;
+      
+      // Show/hide color picker based on selection
+      if (pickColorRadio && pickColorRadio.checked && colorPickerContainer) {
+        colorPickerContainer.style.display = 'flex';
+      } else if (colorPickerContainer) {
+        colorPickerContainer.style.display = 'none';
+      }
+    } else {
+      // Background fill is OFF - disable radio buttons
+      backgroundOptions.style.opacity = '0.5';
+      backgroundOptions.style.pointerEvents = 'none';
+      if (pickColorRadio) pickColorRadio.disabled = true;
+      if (transparentRadio) transparentRadio.disabled = true;
+      if (colorPickerContainer) {
+        colorPickerContainer.style.display = 'none';
+      }
+    }
+  }
+}
+
+function loadResizeImages(files) {
+  if (!files || files.length === 0) return;
+  
+  // Check file size limit (10MB)
+  const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+  const validFiles = Array.from(files).filter(file => {
+    if (file.size > maxSize) {
+      showNotification(`File ${file.name} is too large. Max size is 10MB.`, "error");
+      return false;
+    }
+    return true;
+  });
+  
+  if (validFiles.length === 0) return;
+  
+  validFiles.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const imageData = {
+          id: Date.now() + Math.random(),
+          file: file,
+          image: img,
+          name: file.name,
+          originalWidth: img.width,
+          originalHeight: img.height,
+          aspectRatio: img.width / img.height,
+          status: 'ready'
+        };
+        
+        resizeImages.push(imageData);
+        
+        // Set current aspect ratio to the first image's aspect ratio
+        if (resizeImages.length === 1) {
+          currentAspectRatio = imageData.aspectRatio;
+          
+          // If lock aspect ratio is enabled, set initial dimensions based on first image
+          const lockAspectRatio = document.getElementById('lockAspectRatio');
+          if (lockAspectRatio && lockAspectRatio.checked) {
+            const resizeWidth = document.getElementById('resizeWidth');
+            const resizeHeight = document.getElementById('resizeHeight');
+            if (resizeWidth && resizeHeight) {
+              // Set width to 256 and calculate height
+              resizeWidth.value = 256;
+              resizeHeight.value = Math.round(256 / currentAspectRatio);
+            }
+          }
+        }
+        
+        updateResizeImageGrid();
+        showNotification(`${file.name} loaded successfully!`, "success");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateResizeImageGrid() {
+  const grid = document.getElementById('resizeImageGrid');
+  if (!grid) return;
+  
+  grid.innerHTML = '';
+  
+  resizeImages.forEach(imageData => {
+    const card = createImagePreviewCard(imageData);
+    grid.appendChild(card);
+  });
+}
+
+function createImagePreviewCard(imageData) {
+  const card = document.createElement('div');
+  card.className = 'image-preview-card fade-in';
+  
+  const targetWidth = parseInt(document.getElementById('resizeWidth').value) || 256;
+  const targetHeight = parseInt(document.getElementById('resizeHeight').value) || 256;
+  const lockAspectRatio = document.getElementById('lockAspectRatio').checked;
+  
+  // Calculate final dimensions based on lock aspect ratio setting
+  let finalWidth = targetWidth;
+  let finalHeight = targetHeight;
+  
+  if (lockAspectRatio) {
+    // Use the image's own aspect ratio to calculate dimensions
+    const imageAspectRatio = imageData.aspectRatio;
+    const targetAspectRatio = targetWidth / targetHeight;
+    
+    if (imageAspectRatio > targetAspectRatio) {
+      // Image is wider than target - fit to width
+      finalWidth = targetWidth;
+      finalHeight = Math.round(targetWidth / imageAspectRatio);
+    } else {
+      // Image is taller than target - fit to height
+      finalHeight = targetHeight;
+      finalWidth = Math.round(targetHeight * imageAspectRatio);
+    }
+  }
+  // If lock aspect ratio is OFF, use exact target dimensions (stretching)
+  
+  card.innerHTML = `
+    <div class="image-preview-header">
+      <img src="${imageData.image.src}" alt="${imageData.name}" class="image-preview-thumbnail">
+      <div class="image-preview-controls">
+        <button class="control-btn" onclick="cropImage(${imageData.id})" title="Crop">✂️</button>
+        <button class="control-btn" onclick="resetImage(${imageData.id})" title="Reset">🔄</button>
+        <button class="control-btn" onclick="showImageInfo(${imageData.id})" title="Info">ℹ️</button>
+        <button class="control-btn" onclick="removeImage(${imageData.id})" title="Remove">✕</button>
+      </div>
+    </div>
+    <div class="image-preview-info">
+      <div class="image-preview-name">${imageData.name}</div>
+      <div class="image-preview-dimensions">
+        <span>${imageData.originalWidth} × ${imageData.originalHeight}</span>
+        <span class="dimension-arrow">→</span>
+        <span>${finalWidth} × ${finalHeight}</span>
+      </div>
+      <div class="image-preview-status status-${imageData.status}">
+        ${getStatusText(imageData.status)}
+      </div>
+    </div>
+  `;
+  
+  return card;
+}
+
+function getStatusText(status) {
+  switch (status) {
+    case 'ready': return 'Ready to resize';
+    case 'processing': return 'Processing...';
+    case 'error': return 'Error occurred';
+    default: return 'Unknown status';
+  }
+}
+
+function cropImage(imageId) {
+  showNotification('Crop functionality coming soon!', "info");
+}
+
+function resetImage(imageId) {
+  const imageIndex = resizeImages.findIndex(img => img.id === imageId);
+  if (imageIndex !== -1) {
+    resizeImages[imageIndex].status = 'ready';
+    updateResizeImageGrid();
+    showNotification('Image reset successfully!', "success");
+  }
+}
+
+function showImageInfo(imageId) {
+  const imageData = resizeImages.find(img => img.id === imageId);
+  if (imageData) {
+    const info = `Name: ${imageData.name}\nOriginal Size: ${imageData.originalWidth}×${imageData.originalHeight}\nFile Size: ${formatFileSize(imageData.file.size)}`;
+    alert(info);
+  }
+}
+
+function removeImage(imageId) {
+  const imageIndex = resizeImages.findIndex(img => img.id === imageId);
+  if (imageIndex !== -1) {
+    resizeImages.splice(imageIndex, 1);
+    updateResizeImageGrid();
+    showNotification('Image removed successfully!', "success");
+  }
+}
+
+function toggleImageFilter() {
+  showNotification('Filter functionality coming soon!', "info");
+}
+
+function clearAllImages() {
+  if (resizeImages.length === 0) {
+    showNotification('No images to clear.', "info");
+    return;
+  }
+  
+  if (confirm('Are you sure you want to clear all images?')) {
+    resizeImages = [];
+    updateResizeImageGrid();
+    showNotification('All images cleared!', "success");
+  }
+}
+
+async function exportResizedImages() {
+  if (resizeImages.length === 0) {
+    showNotification('Please add some images first.', "error");
+    return;
+  }
+  
+  const targetWidth = parseInt(document.getElementById('resizeWidth').value) || 256;
+  const targetHeight = parseInt(document.getElementById('resizeHeight').value) || 256;
+  const exportFormat = document.getElementById('exportFormat').value;
+  const lockAspectRatio = document.getElementById('lockAspectRatio').checked;
+  const backgroundFill = lockAspectRatio ? false : document.getElementById('backgroundFill').checked;
+  const backgroundType = lockAspectRatio ? 'transparent' : document.querySelector('input[name="backgroundType"]:checked').value;
+  const backgroundColor = document.getElementById('backgroundColor').value;
+  
+  showNotification(`Processing ${resizeImages.length} images...`, "info");
+  
+  for (let i = 0; i < resizeImages.length; i++) {
+    const imageData = resizeImages[i];
+    imageData.status = 'processing';
+    updateResizeImageGrid();
+    
+    try {
+      // If lock aspect ratio is enabled, calculate dimensions for each image individually
+      let finalWidth = targetWidth;
+      let finalHeight = targetHeight;
+      
+      if (lockAspectRatio) {
+        // Use the image's own aspect ratio to calculate dimensions
+        const imageAspectRatio = imageData.aspectRatio;
+        const targetAspectRatio = targetWidth / targetHeight;
+        
+        if (imageAspectRatio > targetAspectRatio) {
+          // Image is wider than target - fit to width
+          finalWidth = targetWidth;
+          finalHeight = Math.round(targetWidth / imageAspectRatio);
+        } else {
+          // Image is taller than target - fit to height
+          finalHeight = targetHeight;
+          finalWidth = Math.round(targetHeight * imageAspectRatio);
+        }
+      }
+      // If lock aspect ratio is OFF, use exact target dimensions (stretching)
+      
+      const resizedImage = await resizeImage(imageData, finalWidth, finalHeight, backgroundFill, backgroundType, backgroundColor, exportFormat, lockAspectRatio);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = resizedImage;
+      link.download = `${imageData.name.replace(/\.[^/.]+$/, "")}_${finalWidth}x${finalHeight}.${exportFormat}`;
+      link.click();
+      
+      imageData.status = 'ready';
+      updateResizeImageGrid();
+      
+      // Small delay to prevent overwhelming the browser
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+    } catch (error) {
+      console.error('Error resizing image:', error);
+      imageData.status = 'error';
+      updateResizeImageGrid();
+      showNotification(`Error processing ${imageData.name}: ${error.message}`, "error");
+    }
+  }
+  
+  showNotification('All images processed and downloaded!', "success");
+}
+
+async function resizeImage(imageData, targetWidth, targetHeight, backgroundFill, backgroundType, backgroundColor, exportFormat, lockAspectRatio) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    
+    // Fill background if enabled
+    if (backgroundFill) {
+      if (backgroundType === 'transparent') {
+        // Clear canvas for transparency
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      } else {
+        // Fill with color
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    } else {
+      // No background fill, clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    if (lockAspectRatio) {
+      // Lock aspect ratio ON - maintain aspect ratio and fit within target dimensions
+      const scaleX = targetWidth / imageData.originalWidth;
+      const scaleY = targetHeight / imageData.originalHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      const scaledWidth = imageData.originalWidth * scale;
+      const scaledHeight = imageData.originalHeight * scale;
+      
+      // Center the image
+      const x = (targetWidth - scaledWidth) / 2;
+      const y = (targetHeight - scaledHeight) / 2;
+      
+      // Draw the image
+      ctx.drawImage(imageData.image, x, y, scaledWidth, scaledHeight);
+    } else {
+      // Lock aspect ratio OFF - stretch image to exact target dimensions
+      ctx.drawImage(imageData.image, 0, 0, targetWidth, targetHeight);
+    }
+    
+    // Convert to desired format
+    let mimeType;
+    switch (exportFormat) {
+      case 'png':
+        mimeType = 'image/png';
+        break;
+      case 'jpg':
+        mimeType = 'image/jpeg';
+        break;
+      case 'webp':
+        mimeType = 'image/webp';
+        break;
+      default:
+        mimeType = 'image/png';
+    }
+    
+    try {
+      const dataURL = canvas.toDataURL(mimeType, exportFormat === 'jpg' ? 0.9 : undefined);
+      resolve(dataURL);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 function populateColumnSelectors() {
   const xColumn = document.getElementById("xColumn");
   const yColumn = document.getElementById("yColumn");

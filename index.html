@@ -49,6 +49,7 @@
   
   <div id="tabs" class="fade-in">
     <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
+    <button class="tab-button" onclick="openTab('resizeTab')">Resize</button>
     <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
     <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
     <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
@@ -64,6 +65,99 @@
     </div>
     <canvas id="scaleCanvas"></canvas>
     <a id="scaleDownload" class="download-link" download="scaled.png" style="display: none;">Download Scaled Image</a>
+  </div>
+
+  <div id="resizeTab" class="tabcontent">
+    <h2>Image Resizer</h2>
+    
+    <!-- Image Upload Section -->
+    <div class="resize-upload-section">
+      <div class="upload-controls">
+        <button class="upload-btn" onclick="document.getElementById('resizeInput').click()">
+          <span class="upload-icon">+</span>
+          <span>Add Images</span>
+        </button>
+        <button class="filter-btn" onclick="toggleImageFilter()" title="Filter/Sort">
+          <span>🔍</span>
+        </button>
+        <button class="clear-btn" onclick="clearAllImages()" title="Clear All">
+          <span>🗑️</span>
+        </button>
+      </div>
+      <div class="file-info">Max file size: 10 MB</div>
+      <input type="file" id="resizeInput" accept="image/*" multiple style="display: none;" onchange="loadResizeImages(this.files)">
+    </div>
+
+    <!-- Resize Settings -->
+    <div class="resize-settings">
+      <h3>Resize Settings</h3>
+      
+      <div class="size-inputs">
+        <div class="input-group">
+          <label for="resizeWidth">Width:</label>
+          <input type="number" id="resizeWidth" value="256" min="1" max="10000">
+          <select id="resizeUnit">
+            <option value="px">px</option>
+            <option value="%">%</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <label for="resizeHeight">Height:</label>
+          <input type="number" id="resizeHeight" value="256" min="1" max="10000">
+          <span class="unit-display">px</span>
+        </div>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="lockAspectRatio">
+        <label for="lockAspectRatio">Lock Aspect Ratio</label>
+      </div>
+
+      <div class="background-fill-section">
+        <div class="checkbox-group">
+          <input type="checkbox" id="backgroundFill" checked>
+          <label for="backgroundFill">Background Fill</label>
+          <span class="help-icon" title="Add background color or transparency to fill empty space">?</span>
+        </div>
+        
+        <div class="background-options">
+          <div class="radio-group">
+            <input type="radio" id="pickColor" name="backgroundType" value="color">
+            <label for="pickColor">Pick a color</label>
+          </div>
+          <div class="radio-group">
+            <input type="radio" id="transparent" name="backgroundType" value="transparent" checked>
+            <label for="transparent">Transparent</label>
+            <span class="help-icon" title="Keep transparent background">?</span>
+          </div>
+        </div>
+        
+        <div class="color-picker-container" style="display: none;">
+          <input type="color" id="backgroundColor" value="#ffffff">
+          <label for="backgroundColor">Background Color</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Settings -->
+    <div class="export-settings">
+      <h3>Export Settings</h3>
+      <div class="input-group">
+        <label for="exportFormat">Save Image As:</label>
+        <select id="exportFormat">
+          <option value="png">PNG</option>
+          <option value="jpg">JPG</option>
+          <option value="webp">WebP</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Export Button -->
+    <button class="export-btn" onclick="exportResizedImages()">Export →</button>
+
+    <!-- Image Preview Grid -->
+    <div id="resizeImageGrid" class="image-grid"></div>
   </div>
 
   <div id="slicerTab" class="tabcontent">
