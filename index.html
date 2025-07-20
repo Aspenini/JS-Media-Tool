@@ -73,19 +73,12 @@
     <!-- Image Upload Section -->
     <div class="resize-upload-section">
       <div class="upload-controls">
-        <button class="upload-btn" onclick="document.getElementById('resizeInput').click()">
-          <span class="upload-icon">+</span>
-          <span>Add Images</span>
-        </button>
-        <button class="filter-btn" onclick="toggleImageFilter()" title="Filter/Sort">
-          <span>🔍</span>
-        </button>
+        <input type="file" id="resizeInput" accept="image/*" multiple onchange="loadResizeImages(this.files)">
         <button class="clear-btn" onclick="clearAllImages()" title="Clear All">
           <span>🗑️</span>
         </button>
       </div>
       <div class="file-info">Max file size: 10 MB</div>
-      <input type="file" id="resizeInput" accept="image/*" multiple style="display: none;" onchange="loadResizeImages(this.files)">
     </div>
 
     <!-- Resize Settings -->

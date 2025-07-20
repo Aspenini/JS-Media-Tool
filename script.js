@@ -1100,9 +1100,7 @@ function removeImage(imageId) {
   }
 }
 
-function toggleImageFilter() {
-  showNotification('Filter functionality coming soon!', "info");
-}
+
 
 function clearAllImages() {
   if (resizeImages.length === 0) {
