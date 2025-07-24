@@ -271,12 +271,11 @@ async function processAudio() {
   }
 }
 
-function audioBufferToWavBlob(buffer) {
+function audioBufferToWavBlob(buffer, bitDepth = 16) {
   // Adapted from: https://github.com/Jam3/audiobuffer-to-wav
   const numChannels = buffer.numberOfChannels;
   const sampleRate = buffer.sampleRate;
   const format = 1; // PCM
-  const bitDepth = 16;
   const samples = buffer.length;
   const blockAlign = numChannels * bitDepth / 8;
   const byteRate = sampleRate * blockAlign;
@@ -306,16 +305,51 @@ function audioBufferToWavBlob(buffer) {
 
   // Write interleaved PCM samples
   let offset = 44;
+  const maxValue = Math.pow(2, bitDepth - 1) - 1;
+  
   for (let i = 0; i < samples; i++) {
     for (let ch = 0; ch < numChannels; ch++) {
       let sample = buffer.getChannelData(ch)[i];
       sample = Math.max(-1, Math.min(1, sample));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-      offset += 2;
+      
+      if (bitDepth === 8) {
+        // 8-bit unsigned
+        const unsignedSample = Math.round((sample + 1) * 127.5);
+        view.setUint8(offset, unsignedSample);
+        offset += 1;
+      } else {
+        // 16-bit signed
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        offset += 2;
+      }
     }
   }
 
   return new Blob([wavBuffer], { type: 'audio/wav' });
+}
+
+// Function to resample audio for compression
+async function resampleAudio(audioBuffer, newSampleRate) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const numChannels = audioBuffer.numberOfChannels;
+  const originalSampleRate = audioBuffer.sampleRate;
+  
+  // Calculate new length
+  const newLength = Math.floor(audioBuffer.length * (newSampleRate / originalSampleRate));
+  
+  // Create offline context for resampling
+  const offlineContext = new OfflineAudioContext(
+    numChannels,
+    newLength,
+    newSampleRate
+  );
+  
+  const source = offlineContext.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(offlineContext.destination);
+  source.start(0);
+  
+  return await offlineContext.startRendering();
 }
 
 async function applyVintageRadioEffect(buffer) {
@@ -1645,4 +1679,733 @@ function drawScatterChart(ctx, data, xLabel, yLabel) {
   ctx.rotate(-Math.PI / 2);
   ctx.fillText(yLabel, 0, 0);
   ctx.restore();
+}
+
+// Compression Tab Logic
+let compressionFile = null;
+let compressionFileType = null;
+let compressionFileData = null;
+
+// Event listeners for compression functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Advanced options checkbox handler
+  const advancedCompression = document.getElementById('advancedCompression');
+  if (advancedCompression) {
+    advancedCompression.addEventListener('change', function() {
+      updateAdvancedCompressionVisibility();
+    });
+  }
+
+  // Compression preset radio button handlers
+  const compressionPresets = document.querySelectorAll('input[name="compressionPreset"]');
+  compressionPresets.forEach(radio => {
+    radio.addEventListener('change', function() {
+      updateCompressionPreset();
+    });
+  });
+});
+
+function updateAdvancedCompressionVisibility() {
+  const advancedCompression = document.getElementById('advancedCompression');
+  const advancedPanel = document.getElementById('advancedCompressionPanel');
+  const quickSettings = document.querySelector('.quick-settings');
+  
+  if (advancedCompression && advancedPanel && quickSettings) {
+    if (advancedCompression.checked) {
+      advancedPanel.style.display = 'block';
+      quickSettings.classList.add('disabled');
+      // Disable radio buttons
+      document.querySelectorAll('input[name="compressionPreset"]').forEach(radio => {
+        radio.disabled = true;
+      });
+    } else {
+      advancedPanel.style.display = 'none';
+      quickSettings.classList.remove('disabled');
+      // Enable radio buttons
+      document.querySelectorAll('input[name="compressionPreset"]').forEach(radio => {
+        radio.disabled = false;
+      });
+    }
+  }
+}
+
+function updateCompressionPreset() {
+  const preset = document.querySelector('input[name="compressionPreset"]:checked').value;
+  
+  if (compressionFileType === 'image') {
+    updateImagePreset(preset);
+  } else if (compressionFileType === 'video') {
+    updateVideoPreset(preset);
+  } else if (compressionFileType === 'audio') {
+    updateAudioPreset(preset);
+  }
+}
+
+function updateImagePreset(preset) {
+  const quality = document.getElementById('imageQuality');
+  const format = document.getElementById('imageFormat');
+  
+  switch(preset) {
+    case 'bestQuality':
+      quality.value = 90;
+      format.value = 'png';
+      break;
+    case 'balanced':
+      quality.value = 75;
+      format.value = 'jpeg';
+      break;
+    case 'bestCompression':
+      quality.value = 50;
+      format.value = 'jpeg';
+      break;
+  }
+}
+
+function updateVideoPreset(preset) {
+  const bitrate = document.getElementById('videoBitrate');
+  const fps = document.getElementById('videoFPS');
+  const format = document.getElementById('videoFormat');
+  const codec = document.getElementById('videoCodec');
+  
+  switch(preset) {
+    case 'bestQuality':
+      bitrate.value = 5000;
+      fps.value = 30;
+      format.value = 'mp4';
+      codec.value = 'h264';
+      break;
+    case 'balanced':
+      bitrate.value = 2000;
+      fps.value = 30;
+      format.value = 'mp4';
+      codec.value = 'h264';
+      break;
+    case 'bestCompression':
+      bitrate.value = 800;
+      fps.value = 24;
+      format.value = 'webm';
+      codec.value = 'vp8';
+      break;
+  }
+}
+
+function updateAudioPreset(preset) {
+  const bitrate = document.getElementById('audioBitrate');
+  const sampleRate = document.getElementById('audioSampleRate');
+  const format = document.getElementById('audioFormat');
+  const channels = document.getElementById('audioChannels');
+  
+  switch(preset) {
+    case 'bestQuality':
+      bitrate.value = 192;
+      sampleRate.value = 44100;
+      format.value = 'wav';
+      channels.value = 2;
+      break;
+    case 'balanced':
+      bitrate.value = 64;
+      sampleRate.value = 22050;
+      format.value = 'mp3';
+      channels.value = 2;
+      break;
+    case 'bestCompression':
+      bitrate.value = 32;
+      sampleRate.value = 16000;
+      format.value = 'mp3';
+      channels.value = 1;
+      break;
+  }
+}
+
+function loadCompressionFile(files) {
+  if (!files || files.length === 0) return;
+  
+  const file = files[0];
+  compressionFile = file;
+  
+  // Determine file type
+  if (file.type.startsWith('image/')) {
+    compressionFileType = 'image';
+  } else if (file.type.startsWith('video/')) {
+    compressionFileType = 'video';
+  } else if (file.type.startsWith('audio/')) {
+    compressionFileType = 'audio';
+  } else {
+    showNotification('Unsupported file type. Please upload an image, video, or audio file.', 'error');
+    return;
+  }
+  
+  // Load file data
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    compressionFileData = e.target.result;
+    displayFileInfo(file);
+    showCompressionSettings();
+    showNotification(`${file.name} loaded successfully!`, 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function displayFileInfo(file) {
+  const fileInfo = document.getElementById('compressionFileInfo');
+  const fileDetails = document.getElementById('compressionFileDetails');
+  
+  const fileSize = formatFileSize(file.size);
+  const fileType = file.type;
+  const fileName = file.name;
+  
+  let additionalInfo = '';
+  
+  if (compressionFileType === 'image') {
+    const img = new Image();
+    img.onload = () => {
+      additionalInfo = `
+        <div class="file-detail-item">
+          <span class="file-detail-label">Dimensions</span>
+          <span class="file-detail-value">${img.width} × ${img.height}</span>
+        </div>
+      `;
+      updateFileDetails(fileSize, fileType, fileName, additionalInfo);
+    };
+    img.src = compressionFileData;
+  } else if (compressionFileType === 'video') {
+    const video = document.createElement('video');
+    video.onloadedmetadata = () => {
+      additionalInfo = `
+        <div class="file-detail-item">
+          <span class="file-detail-label">Duration</span>
+          <span class="file-detail-value">${formatDuration(video.duration)}</span>
+        </div>
+        <div class="file-detail-item">
+          <span class="file-detail-label">Dimensions</span>
+          <span class="file-detail-value">${video.videoWidth} × ${video.videoHeight}</span>
+        </div>
+      `;
+      updateFileDetails(fileSize, fileType, fileName, additionalInfo);
+    };
+    video.src = compressionFileData;
+  } else if (compressionFileType === 'audio') {
+    const audio = document.createElement('audio');
+    audio.onloadedmetadata = () => {
+      additionalInfo = `
+        <div class="file-detail-item">
+          <span class="file-detail-label">Duration</span>
+          <span class="file-detail-value">${formatDuration(audio.duration)}</span>
+        </div>
+      `;
+      updateFileDetails(fileSize, fileType, fileName, additionalInfo);
+    };
+    audio.src = compressionFileData;
+  }
+  
+  fileInfo.style.display = 'block';
+}
+
+function updateFileDetails(fileSize, fileType, fileName, additionalInfo) {
+  const fileDetails = document.getElementById('compressionFileDetails');
+  
+  fileDetails.innerHTML = `
+    <div class="file-detail-item">
+      <span class="file-detail-label">Name</span>
+      <span class="file-detail-value">${fileName}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Size</span>
+      <span class="file-detail-value">${fileSize}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Type</span>
+      <span class="file-detail-value">${fileType}</span>
+    </div>
+    ${additionalInfo}
+  `;
+}
+
+function formatDuration(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function showCompressionSettings() {
+  const settings = document.getElementById('compressionSettings');
+  const button = document.getElementById('compressButton');
+  
+  settings.style.display = 'block';
+  button.style.display = 'block';
+  
+  // Show relevant advanced options
+  document.getElementById('imageAdvancedOptions').style.display = 'none';
+  document.getElementById('videoAdvancedOptions').style.display = 'none';
+  document.getElementById('audioAdvancedOptions').style.display = 'none';
+  
+  if (compressionFileType === 'image') {
+    document.getElementById('imageAdvancedOptions').style.display = 'block';
+  } else if (compressionFileType === 'video') {
+    document.getElementById('videoAdvancedOptions').style.display = 'block';
+  } else if (compressionFileType === 'audio') {
+    document.getElementById('audioAdvancedOptions').style.display = 'block';
+  }
+  
+  // Set initial preset
+  updateCompressionPreset();
+}
+
+function clearCompressionFile() {
+  compressionFile = null;
+  compressionFileType = null;
+  compressionFileData = null;
+  
+  document.getElementById('compressionFileInfo').style.display = 'none';
+  document.getElementById('compressionSettings').style.display = 'none';
+  document.getElementById('compressButton').style.display = 'none';
+  document.getElementById('compressionResults').style.display = 'none';
+  document.getElementById('compressionInput').value = '';
+  
+  showNotification('File cleared!', 'success');
+}
+
+async function compressFile() {
+  if (!compressionFile || !compressionFileData) {
+    showNotification('Please select a file first.', 'error');
+    return;
+  }
+  
+  const compressButton = document.getElementById('compressButton');
+  compressButton.disabled = true;
+  compressButton.textContent = 'Compressing...';
+  
+  try {
+    let compressedData;
+    let compressedSize;
+    let originalSize = compressionFile.size;
+    
+    if (compressionFileType === 'image') {
+      compressedData = await compressImage();
+    } else if (compressionFileType === 'video') {
+      compressedData = await compressVideo();
+    } else if (compressionFileType === 'audio') {
+      compressedData = await compressAudio();
+    }
+    
+    // Calculate compressed size
+    if (compressedData.startsWith('data:')) {
+      // Remove data URL prefix to get actual size
+      const base64 = compressedData.split(',')[1];
+      compressedSize = Math.ceil((base64.length * 3) / 4);
+    } else if (compressedData instanceof Blob) {
+      compressedSize = compressedData.size;
+    } else {
+      // For object URLs, we need to fetch the blob
+      try {
+        const response = await fetch(compressedData);
+        const blob = await response.blob();
+        compressedSize = blob.size;
+      } catch (error) {
+        console.error('Error calculating compressed size:', error);
+        compressedSize = originalSize; // Fallback
+      }
+    }
+    
+    // Display results
+    displayCompressionResults(originalSize, compressedSize, compressedData);
+    
+    showNotification('File compressed successfully!', 'success');
+  } catch (error) {
+    console.error('Error compressing file:', error);
+    showNotification('Error compressing file: ' + error.message, 'error');
+  } finally {
+    compressButton.disabled = false;
+    compressButton.textContent = 'Compress File';
+  }
+}
+
+async function compressImage() {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Get compression settings
+      const quality = parseInt(document.getElementById('imageQuality').value) / 100;
+      const format = document.getElementById('imageFormat').value;
+      const progressive = document.getElementById('imageProgressive').checked;
+      
+      // For compression, we can optionally reduce dimensions
+      const preset = document.querySelector('input[name="compressionPreset"]:checked').value;
+      let scaleFactor = 1;
+      
+      if (preset === 'bestCompression' && !document.getElementById('advancedCompression').checked) {
+        // Reduce size for best compression
+        scaleFactor = 0.7;
+      } else if (preset === 'balanced' && !document.getElementById('advancedCompression').checked) {
+        // Slight reduction for balanced
+        scaleFactor = 0.9;
+      }
+      
+      canvas.width = img.width * scaleFactor;
+      canvas.height = img.height * scaleFactor;
+      
+      // Disable smoothing for better compression
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      let mimeType;
+      switch(format) {
+        case 'jpeg':
+          mimeType = 'image/jpeg';
+          break;
+        case 'png':
+          mimeType = 'image/png';
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          break;
+        default:
+          mimeType = 'image/jpeg';
+      }
+      
+      try {
+        // For PNG, quality parameter is ignored, but we can still compress by reducing colors
+        if (format === 'png' && preset === 'bestCompression') {
+          // Convert to indexed colors for PNG compression
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const quantizedData = quantizeImage(imageData, 256); // Reduce to 256 colors
+          ctx.putImageData(quantizedData, 0, 0);
+        }
+        
+        const dataURL = canvas.toDataURL(mimeType, quality);
+        resolve(dataURL);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    img.onerror = reject;
+    img.src = compressionFileData;
+  });
+}
+
+// Helper function to quantize image colors for better PNG compression
+function quantizeImage(imageData, maxColors) {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Simple color quantization - reduce color depth
+  for (let i = 0; i < data.length; i += 4) {
+    // Reduce each color channel to fewer bits
+    data[i] = Math.floor(data[i] / 32) * 32;     // Red
+    data[i + 1] = Math.floor(data[i + 1] / 32) * 32; // Green
+    data[i + 2] = Math.floor(data[i + 2] / 32) * 32; // Blue
+    // Alpha stays the same
+  }
+  
+  return imageData;
+}
+
+// Helper function to reduce audio bit depth for compression
+function reduceBitDepth(audioBuffer, bitDepth) {
+  const numChannels = audioBuffer.numberOfChannels;
+  const length = audioBuffer.length;
+  const sampleRate = audioBuffer.sampleRate;
+  
+  // Validate inputs
+  if (!isFinite(length) || length <= 0 || !isFinite(sampleRate) || sampleRate <= 0) {
+    throw new Error('Invalid audio buffer parameters');
+  }
+  
+  // Create new buffer with reduced bit depth
+  const newBuffer = new AudioContext().createBuffer(numChannels, length, sampleRate);
+  
+  // Calculate quantization step
+  const maxValue = Math.pow(2, bitDepth - 1) - 1;
+  
+  for (let channel = 0; channel < numChannels; channel++) {
+    const originalData = audioBuffer.getChannelData(channel);
+    const newData = newBuffer.getChannelData(channel);
+    
+    for (let i = 0; i < length; i++) {
+      // Quantize the sample to the specified bit depth
+      const quantized = Math.round(originalData[i] * maxValue) / maxValue;
+      newData[i] = Math.max(-1, Math.min(1, quantized));
+    }
+  }
+  
+  return newBuffer;
+}
+
+async function compressVideo() {
+  // For video compression, we'll simulate compression by reducing quality
+  // In a real implementation, you'd use WebCodecs API or similar
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.onloadedmetadata = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Get compression settings
+      const bitrate = parseInt(document.getElementById('videoBitrate').value);
+      const fps = parseInt(document.getElementById('videoFPS').value);
+      const format = document.getElementById('videoFormat').value;
+      
+      // Calculate new dimensions based on bitrate reduction
+      const scaleFactor = Math.min(1, bitrate / 2000); // Scale down if bitrate is low
+      canvas.width = video.videoWidth * scaleFactor;
+      canvas.height = video.videoHeight * scaleFactor;
+      
+      // Create a compressed frame (simplified - just one frame)
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to data URL with reduced quality
+      const quality = Math.min(0.9, bitrate / 5000);
+      const mimeType = format === 'webm' ? 'image/webp' : 'image/jpeg';
+      const dataURL = canvas.toDataURL(mimeType, quality);
+      
+      resolve(dataURL);
+    };
+    video.onerror = reject;
+    video.src = compressionFileData;
+  });
+}
+
+async function compressAudio() {
+  // For audio compression, we'll use Pizzicato.js for better quality compression
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Check if Pizzicato is available
+      if (typeof Pizzicato === 'undefined') {
+        throw new Error('Pizzicato.js library not loaded');
+      }
+      
+      // Get compression settings
+      const bitrate = parseInt(document.getElementById('audioBitrate').value) || 128;
+      const sampleRate = parseInt(document.getElementById('audioSampleRate').value) || 44100;
+      const channels = parseInt(document.getElementById('audioChannels').value) || 2;
+      const preset = document.querySelector('input[name="compressionPreset"]:checked').value;
+      
+      // Create a Pizzicato sound from the file
+      const sound = new Pizzicato.Sound({
+        source: 'file',
+        options: { path: compressionFileData }
+      }, async (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        
+        try {
+          // Apply compression effects based on preset
+          if (preset === 'bestCompression') {
+            // Add compressor for maximum compression
+            const compressor = new Pizzicato.Effects.Compressor({
+              threshold: -30,
+              knee: 25,
+              attack: 0.003,
+              release: 0.25,
+              ratio: 8
+            });
+            sound.addEffect(compressor);
+            
+            // Add low-pass filter to reduce high frequencies
+            const lowPass = new Pizzicato.Effects.LowPassFilter({
+              frequency: 8000,
+              peak: 1
+            });
+            sound.addEffect(lowPass);
+            
+          } else if (preset === 'balanced') {
+            // Add moderate compressor
+            const compressor = new Pizzicato.Effects.Compressor({
+              threshold: -24,
+              knee: 30,
+              attack: 0.003,
+              release: 0.25,
+              ratio: 4
+            });
+            sound.addEffect(compressor);
+            
+          } else {
+            // Best quality - minimal compression
+            const compressor = new Pizzicato.Effects.Compressor({
+              threshold: -20,
+              knee: 30,
+              attack: 0.003,
+              release: 0.25,
+              ratio: 2
+            });
+            sound.addEffect(compressor);
+          }
+          
+          // Process the audio using Pizzicato's offline rendering
+          const processedBuffer = await processPizzicatoSound(sound, sampleRate, channels);
+          
+          // Convert to WAV with appropriate bit depth
+          const bitDepth = preset === 'bestCompression' ? 8 : 16;
+          const outputBlob = audioBufferToWavBlob(processedBuffer, bitDepth);
+          const url = URL.createObjectURL(outputBlob);
+          
+          resolve(url);
+          
+        } catch (processingError) {
+          reject(processingError);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Pizzicato audio compression error:', error);
+      // Fallback to original method
+      try {
+        console.log('Falling back to original compression method...');
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const response = await fetch(compressionFileData);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        const bitrate = parseInt(document.getElementById('audioBitrate').value) || 128;
+        const sampleRate = parseInt(document.getElementById('audioSampleRate').value) || 44100;
+        const channels = parseInt(document.getElementById('audioChannels').value) || 2;
+        
+        const simpleCompressed = await simpleAudioCompression(audioBuffer, bitrate, sampleRate, channels);
+        resolve(simpleCompressed);
+      } catch (fallbackError) {
+        console.error('Fallback compression also failed:', fallbackError);
+        reject(error);
+      }
+    }
+  });
+}
+
+// Helper function to process Pizzicato sound offline
+async function processPizzicatoSound(sound, targetSampleRate, targetChannels) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create offline context
+      const duration = sound.sourceNode.buffer ? sound.sourceNode.buffer.duration : 10; // Default 10 seconds
+      const offlineContext = new OfflineAudioContext(
+        targetChannels,
+        duration * targetSampleRate,
+        targetSampleRate
+      );
+      
+      // Create a temporary sound for offline processing
+      const tempSound = new Pizzicato.Sound({
+        source: 'sound',
+        options: { sound: sound }
+      });
+      
+      // Connect the sound to offline context
+      tempSound.connect(offlineContext.destination);
+      
+      // Start the sound
+      tempSound.play();
+      
+      // Render the audio
+      offlineContext.startRendering().then(buffer => {
+        resolve(buffer);
+      }).catch(reject);
+      
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+// Simple audio compression fallback
+async function simpleAudioCompression(audioBuffer, bitrate, sampleRate, channels) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  
+  // Use original sample rate if target is higher
+  const targetSampleRate = Math.min(sampleRate, audioBuffer.sampleRate);
+  
+  // Limit to first 5 minutes for very long files
+  const maxSamples = 5 * 60 * targetSampleRate;
+  const finalLength = Math.min(audioBuffer.length, maxSamples);
+  
+  // Create simple offline context
+  const offlineContext = new OfflineAudioContext(
+    Math.min(channels, audioBuffer.numberOfChannels),
+    finalLength,
+    targetSampleRate
+  );
+  
+  const source = offlineContext.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(offlineContext.destination);
+  source.start(0);
+  
+  const renderedBuffer = await offlineContext.startRendering();
+  
+  // Apply compression by reducing bit depth
+  const outputBlob = audioBufferToWavBlob(renderedBuffer, 8); // Use 8-bit for maximum compression
+  return URL.createObjectURL(outputBlob);
+}
+
+function displayCompressionResults(originalSize, compressedSize, compressedData) {
+  const results = document.getElementById('compressionResults');
+  const comparison = document.getElementById('compressionComparison');
+  const preview = document.getElementById('compressionPreview');
+  const download = document.getElementById('compressionDownload');
+  
+  // Calculate compression ratio
+  const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+  const sizeReduction = formatFileSize(originalSize - compressedSize);
+  
+  // Update comparison
+  comparison.innerHTML = `
+    <div class="comparison-item">
+      <h4>Original</h4>
+      <div class="file-size">${formatFileSize(originalSize)}</div>
+      <div class="compression-ratio">100%</div>
+    </div>
+    <div class="comparison-item">
+      <h4>Compressed</h4>
+      <div class="file-size">${formatFileSize(compressedSize)}</div>
+      <div class="compression-ratio">-${compressionRatio}% (${sizeReduction} saved)</div>
+    </div>
+  `;
+  
+  // Update preview
+  preview.innerHTML = '';
+  if (compressionFileType === 'image') {
+    const img = document.createElement('img');
+    img.src = compressedData;
+    img.alt = 'Compressed Image';
+    preview.appendChild(img);
+  } else if (compressionFileType === 'video') {
+    const video = document.createElement('video');
+    video.src = compressedData;
+    video.controls = true;
+    video.style.maxWidth = '100%';
+    preview.appendChild(video);
+  } else if (compressionFileType === 'audio') {
+    const audio = document.createElement('audio');
+    audio.src = compressedData;
+    audio.controls = true;
+    audio.style.width = '100%';
+    audio.style.maxWidth = '500px';
+    preview.appendChild(audio);
+  }
+  
+  // Update download link
+  const fileExtension = getFileExtension();
+  download.href = compressedData;
+  download.download = `compressed_${compressionFile.name.replace(/\.[^/.]+$/, "")}.${fileExtension}`;
+  download.style.display = 'inline-block';
+  
+  results.style.display = 'block';
+}
+
+function getFileExtension() {
+  if (compressionFileType === 'image') {
+    const format = document.getElementById('imageFormat').value;
+    return format;
+  } else if (compressionFileType === 'video') {
+    const format = document.getElementById('videoFormat').value;
+    return format;
+  } else if (compressionFileType === 'audio') {
+    const format = document.getElementById('audioFormat').value;
+    return format;
+  }
+  return 'bin';
 }

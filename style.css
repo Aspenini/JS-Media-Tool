@@ -780,3 +780,284 @@ input[type="checkbox"] {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
 }
+
+/* Compression Tab Styles */
+.compression-upload-section {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.compression-upload-section .upload-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.compression-upload-section .upload-controls input[type="file"] {
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 200px;
+}
+
+.compression-upload-section .upload-controls input[type="file"]:hover {
+  border-color: var(--primary);
+}
+
+.file-info-display {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.file-info-display h3 {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.file-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.file-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.file-detail-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.file-detail-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.compression-settings {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.compression-settings h3 {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.quick-settings {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-settings h4 {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.quick-settings .radio-group {
+  margin-bottom: 0.75rem;
+}
+
+.quick-settings .radio-group input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+.quick-settings .radio-group label {
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.advanced-options {
+  margin-top: 1.5rem;
+}
+
+.advanced-panel {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: var(--background);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.media-options {
+  margin-bottom: 2rem;
+}
+
+.media-options:last-child {
+  margin-bottom: 0;
+}
+
+.media-options h4 {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.media-options .input-group {
+  margin-bottom: 1rem;
+}
+
+.media-options label {
+  display: block;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.media-options input[type="number"],
+.media-options select {
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.media-options input[type="number"]:focus,
+.media-options select:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.media-options input[type="number"]:hover,
+.media-options select:hover {
+  border-color: var(--primary);
+}
+
+.compress-btn {
+  background: var(--primary);
+  color: var(--text);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.compress-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.compress-btn:disabled {
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.compression-results {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.compression-results h3 {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.compression-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--background);
+  border-radius: 8px;
+}
+
+.comparison-item {
+  text-align: center;
+  padding: 1rem;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.comparison-item h4 {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.comparison-item .file-size {
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.comparison-item .compression-ratio {
+  color: var(--success);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.compression-preview {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.compression-preview img,
+.compression-preview video,
+.compression-preview audio {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.compression-preview audio {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Disabled state for quick settings when advanced is enabled */
+.quick-settings.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.quick-settings.disabled .radio-group input[type="radio"] {
+  cursor: not-allowed;
+}
+
+.quick-settings.disabled .radio-group label {
+  cursor: not-allowed;
+}
