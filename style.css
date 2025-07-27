@@ -399,6 +399,259 @@ input[type="checkbox"] {
   background: var(--primary);
 }
 
+/* Spritesheet Styles */
+.spritesheet-upload-section {
+  margin-bottom: 2rem;
+}
+
+.spritesheet-settings {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.spritesheet-settings h3 {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.grid-size-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.spritesheet-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.spritesheet-info {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--background);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.info-value.warning {
+  color: #f59e0b;
+}
+
+.spritesheet-grid {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.spritesheet-grid h3 {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.spritesheet-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  min-height: 200px;
+}
+
+.sprite-item {
+  position: relative;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: move;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 100px;
+}
+
+.sprite-item:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.sprite-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.sprite-item.drag-over {
+  border-color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.sprite-item img {
+  max-width: 100%;
+  max-height: 60px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.sprite-item-name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.sprite-item-index {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--primary);
+  color: var(--text);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 2px solid var(--background);
+}
+
+.sprite-placeholder {
+  border: 2px dashed var(--border);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: default;
+}
+
+.batch-placeholder {
+  opacity: 0.5;
+}
+
+.batch-header {
+  background: var(--primary);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  border: 2px solid var(--primary-dark);
+}
+
+.batch-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.batch-time {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.batch-remove-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.batch-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  transform: scale(1.1);
+}
+
+.sprite-batch-indicator {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  background: var(--success);
+  color: var(--text);
+  width: 24px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 2px solid var(--background);
+}
+
+.spritesheet-result {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  text-align: center;
+}
+
+.spritesheet-result h3 {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+#spritesheetCanvas {
+  max-width: 100%;
+  max-height: 600px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+#spritesheetCanvas:hover {
+  border-color: var(--primary);
+}
+
 /* CSV Visualizer Styles */
 .csv-preview {
   margin-top: 2rem;

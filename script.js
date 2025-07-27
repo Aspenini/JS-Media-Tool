@@ -2409,3 +2409,424 @@ function getFileExtension() {
   }
   return 'bin';
 }
+
+// Spritesheet Tool Logic
+let spritesheetImages = [];
+let spritesheetBatches = [];
+let currentBatchIndex = 0;
+
+function loadSpritesheetImages(files) {
+  if (!files || files.length === 0) {
+    showNotification("Please select at least one image.", "error");
+    return;
+  }
+
+  // Don't clear existing images, just add to them
+  const promises = [];
+  const batchStartIndex = spritesheetImages.length;
+  currentBatchIndex = spritesheetBatches.length;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    
+    if (!file.type.startsWith('image/')) {
+      showNotification(`File ${file.name} is not an image.`, "error");
+      continue;
+    }
+
+    const promise = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          spritesheetImages.push({
+            name: file.name,
+            image: img,
+            width: img.width,
+            height: img.height,
+            index: spritesheetImages.length,
+            batchIndex: currentBatchIndex,
+            batchPosition: spritesheetImages.length - batchStartIndex
+          });
+          resolve();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    promises.push(promise);
+  }
+
+  Promise.all(promises).then(() => {
+    // Add this batch to the batches array
+    const batchImages = spritesheetImages.slice(batchStartIndex);
+    spritesheetBatches.push({
+      index: currentBatchIndex,
+      startIndex: batchStartIndex,
+      count: batchImages.length,
+      name: `Batch ${currentBatchIndex + 1}`,
+      timestamp: new Date().toLocaleTimeString()
+    });
+    
+    // Clear the file input for next batch
+    document.getElementById('spritesheetInput').value = '';
+    
+    showSpritesheetSettings();
+    updateSpritesheetPreview(); // This will call updateSpritesheetGrid() internally
+    showNotification(`Loaded ${batchImages.length} images in Batch ${currentBatchIndex + 1}. Total: ${spritesheetImages.length} images.`, "success");
+  });
+}
+
+function showSpritesheetSettings() {
+  document.getElementById('spritesheetSettings').style.display = 'block';
+  document.getElementById('spritesheetGrid').style.display = 'block';
+  document.getElementById('generateSpritesheetBtn').style.display = 'block';
+}
+
+function updateSpritesheetGrid() {
+  const container = document.getElementById('spritesheetItems');
+  const columns = parseInt(document.getElementById('gridColumns').value);
+  const cellSize = parseInt(document.getElementById('cellSize').value);
+  const padding = parseInt(document.getElementById('spritePadding').value);
+
+  container.innerHTML = '';
+  container.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+  container.style.gap = `${Math.max(padding / 4, 4)}px`; // Scale down padding for preview
+
+  // Scale down the preview cell size for better fit in the interface
+  const previewCellSize = Math.min(Math.max(cellSize / 2, 60), 120);
+
+  // Calculate total rows needed based on batches
+  let totalRows = 0;
+  spritesheetBatches.forEach(batch => {
+    totalRows += Math.ceil(batch.count / columns);
+  });
+
+  // If no batches yet but images exist, calculate rows for current images
+  if (spritesheetBatches.length === 0 && spritesheetImages.length > 0) {
+    totalRows = Math.ceil(spritesheetImages.length / columns);
+  }
+
+  // Ensure we have at least the minimum rows from settings
+  const minRows = parseInt(document.getElementById('gridRows').value);
+  totalRows = Math.max(totalRows, minRows);
+
+  let cellIndex = 0;
+  
+  // Create grid organized by batches
+  spritesheetBatches.forEach((batch, batchIdx) => {
+    // Add batch header
+    const batchHeader = document.createElement('div');
+    batchHeader.className = 'batch-header';
+    batchHeader.style.gridColumn = `1 / ${columns + 1}`;
+    batchHeader.innerHTML = `
+      <span class="batch-title">${batch.name} (${batch.count} images)</span>
+      <span class="batch-time">${batch.timestamp}</span>
+      <button class="batch-remove-btn" onclick="removeBatch(${batchIdx})" title="Remove batch">🗑️</button>
+    `;
+    container.appendChild(batchHeader);
+
+    // Add images from this batch
+    const batchImages = spritesheetImages.filter(img => img.batchIndex === batch.index);
+    batchImages.forEach((imageData, imgIdx) => {
+      const cell = document.createElement('div');
+      cell.className = 'sprite-item';
+      cell.draggable = true;
+      cell.dataset.index = imageData.index;
+      cell.dataset.batchIndex = batch.index;
+      cell.style.minHeight = `${previewCellSize}px`;
+      cell.style.height = `${previewCellSize}px`;
+      
+      cell.innerHTML = `
+        <div class="sprite-item-index">${cellIndex + 1}</div>
+        <img src="${imageData.image.src}" alt="${imageData.name}" style="max-height: ${previewCellSize * 0.6}px;">
+        <div class="sprite-item-name">${imageData.name}</div>
+        <div class="sprite-batch-indicator">B${batch.index + 1}</div>
+      `;
+      
+      container.appendChild(cell);
+      cellIndex++;
+    });
+
+    // Fill remaining columns in the last row of this batch
+    const imagesInBatch = batchImages.length;
+    const remainingInRow = columns - (imagesInBatch % columns);
+    if (remainingInRow < columns && remainingInRow > 0) {
+      for (let i = 0; i < remainingInRow; i++) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'sprite-placeholder batch-placeholder';
+        placeholder.style.minHeight = `${previewCellSize}px`;
+        placeholder.style.height = `${previewCellSize}px`;
+        placeholder.innerHTML = `<span>Empty</span>`;
+        container.appendChild(placeholder);
+      }
+    }
+  });
+
+  // If no images yet, show basic grid
+  if (spritesheetImages.length === 0) {
+    const totalCells = columns * minRows;
+    for (let i = 0; i < totalCells; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'sprite-placeholder';
+      cell.style.minHeight = `${previewCellSize}px`;
+      cell.style.height = `${previewCellSize}px`;
+      cell.innerHTML = `<span>Empty</span>`;
+      container.appendChild(cell);
+    }
+  }
+
+  setupSpriteDragAndDrop();
+}
+
+function setupSpriteDragAndDrop() {
+  const spriteItems = document.querySelectorAll('.sprite-item');
+  
+  spriteItems.forEach(item => {
+    item.addEventListener('dragstart', handleSpriteDragStart);
+    item.addEventListener('dragend', handleSpriteDragEnd);
+    item.addEventListener('dragover', handleSpriteDragOver);
+    item.addEventListener('drop', handleSpriteDrop);
+    item.addEventListener('dragenter', handleSpriteDragEnter);
+    item.addEventListener('dragleave', handleSpriteDragLeave);
+  });
+}
+
+function handleSpriteDragStart(e) {
+  e.target.classList.add('dragging');
+  e.dataTransfer.setData('text/plain', e.target.dataset.index);
+}
+
+function handleSpriteDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.sprite-item').forEach(item => {
+    item.classList.remove('drag-over');
+  });
+}
+
+function handleSpriteDragOver(e) {
+  e.preventDefault();
+}
+
+function handleSpriteDragEnter(e) {
+  e.preventDefault();
+  if (e.target.classList.contains('sprite-item') && !e.target.classList.contains('dragging')) {
+    e.target.classList.add('drag-over');
+  }
+}
+
+function handleSpriteDragLeave(e) {
+  if (!e.target.contains(e.relatedTarget)) {
+    e.target.classList.remove('drag-over');
+  }
+}
+
+function handleSpriteDrop(e) {
+  e.preventDefault();
+  const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
+  const dropTarget = e.target.closest('.sprite-item');
+  
+  if (!dropTarget) return;
+  
+  const dropIndex = parseInt(dropTarget.dataset.index);
+  
+  if (draggedIndex !== dropIndex && !isNaN(draggedIndex) && !isNaN(dropIndex)) {
+    // Swap the images in the array
+    const temp = spritesheetImages[draggedIndex];
+    spritesheetImages[draggedIndex] = spritesheetImages[dropIndex];
+    spritesheetImages[dropIndex] = temp;
+    
+    // Update the grid and preview
+    updateSpritesheetPreview();
+  }
+  
+  dropTarget.classList.remove('drag-over');
+}
+
+function updateSpritesheetPreview() {
+  // Update the grid layout when settings change
+  updateSpritesheetGrid();
+  
+  // Show preview dimensions
+  const columns = parseInt(document.getElementById('gridColumns').value);
+  const rows = parseInt(document.getElementById('gridRows').value);
+  const cellSize = parseInt(document.getElementById('cellSize').value);
+  const padding = parseInt(document.getElementById('spritePadding').value);
+  
+  const canvasWidth = (cellSize * columns) + (padding * (columns - 1));
+  const canvasHeight = (cellSize * rows) + (padding * (rows - 1));
+  
+  // Update grid info if there's a container for it
+  let infoElement = document.getElementById('spritesheetInfo');
+  if (!infoElement) {
+    infoElement = document.createElement('div');
+    infoElement.id = 'spritesheetInfo';
+    infoElement.className = 'spritesheet-info';
+    const settingsElement = document.getElementById('spritesheetSettings');
+    settingsElement.appendChild(infoElement);
+  }
+  
+  // Calculate actual rows needed based on batches
+  let actualRows = 0;
+  spritesheetBatches.forEach(batch => {
+    actualRows += Math.ceil(batch.count / columns);
+  });
+  actualRows = Math.max(actualRows, rows);
+  
+  const actualCanvasHeight = (cellSize * actualRows) + (padding * (actualRows - 1));
+  
+  infoElement.innerHTML = `
+    <div class="info-item">
+      <span class="info-label">Grid:</span>
+      <span class="info-value">${columns} × ${actualRows} (${columns * actualRows} cells)</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Final Size:</span>
+      <span class="info-value">${canvasWidth} × ${actualCanvasHeight}px</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Images:</span>
+      <span class="info-value">${spritesheetImages.length} (${spritesheetBatches.length} batches)</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Status:</span>
+      <span class="info-value">Ready to generate</span>
+    </div>
+  `;
+}
+
+function removeBatch(batchIndex) {
+  const batch = spritesheetBatches[batchIndex];
+  if (!batch) return;
+  
+  // Remove images from this batch
+  spritesheetImages = spritesheetImages.filter(img => img.batchIndex !== batch.index);
+  
+  // Remove the batch
+  spritesheetBatches.splice(batchIndex, 1);
+  
+  // Reindex remaining images
+  spritesheetImages.forEach((img, index) => {
+    img.index = index;
+  });
+  
+  // Update the display
+  updateSpritesheetPreview();
+  showNotification(`Batch ${batch.name} removed.`, "success");
+  
+  // If no images left, hide sections
+  if (spritesheetImages.length === 0) {
+    clearSpritesheetImages();
+  }
+}
+
+function clearSpritesheetImages() {
+  spritesheetImages = [];
+  spritesheetBatches = [];
+  currentBatchIndex = 0;
+  document.getElementById('spritesheetInput').value = '';
+  document.getElementById('spritesheetSettings').style.display = 'none';
+  document.getElementById('spritesheetGrid').style.display = 'none';
+  document.getElementById('generateSpritesheetBtn').style.display = 'none';
+  document.getElementById('spritesheetResult').style.display = 'none';
+  showNotification("All images and batches cleared.", "success");
+}
+
+function generateSpritesheet() {
+  if (spritesheetImages.length === 0) {
+    showNotification("Please load images first.", "error");
+    return;
+  }
+
+  const columns = parseInt(document.getElementById('gridColumns').value);
+  const cellSize = parseInt(document.getElementById('cellSize').value);
+  const padding = parseInt(document.getElementById('spritePadding').value);
+  const useBackground = document.getElementById('spritesheetBackground').checked;
+  const backgroundColor = document.getElementById('spritesheetBgColor').value;
+
+  const canvas = document.getElementById('spritesheetCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Calculate actual rows needed based on batches
+  let totalRows = 0;
+  spritesheetBatches.forEach(batch => {
+    totalRows += Math.ceil(batch.count / columns);
+  });
+
+  // Calculate canvas dimensions
+  const canvasWidth = (cellSize * columns) + (padding * (columns - 1));
+  const canvasHeight = (cellSize * totalRows) + (padding * (totalRows - 1));
+  
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  // Clear canvas
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  // Fill background if enabled
+  if (useBackground) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  }
+
+  // Disable image smoothing for pixel-perfect rendering
+  ctx.imageSmoothingEnabled = false;
+
+  // Draw sprites organized by batches
+  let globalRow = 0;
+  
+  spritesheetBatches.forEach(batch => {
+    const batchImages = spritesheetImages.filter(img => img.batchIndex === batch.index);
+    
+    batchImages.forEach((imageData, imgIndex) => {
+      const col = imgIndex % columns;
+      const localRow = Math.floor(imgIndex / columns);
+      const row = globalRow + localRow;
+      
+      const x = col * (cellSize + padding);
+      const y = row * (cellSize + padding);
+      
+      if (imageData && imageData.image) {
+        // Calculate scale to fit image in cell while maintaining aspect ratio
+        const scale = Math.min(cellSize / imageData.width, cellSize / imageData.height);
+        const scaledWidth = imageData.width * scale;
+        const scaledHeight = imageData.height * scale;
+        
+        // Center the image in the cell
+        const offsetX = (cellSize - scaledWidth) / 2;
+        const offsetY = (cellSize - scaledHeight) / 2;
+        
+        ctx.drawImage(
+          imageData.image,
+          x + offsetX,
+          y + offsetY,
+          scaledWidth,
+          scaledHeight
+        );
+      }
+    });
+    
+    // Move to next batch's starting row
+    globalRow += Math.ceil(batch.count / columns);
+  });
+
+  // Set up download
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const download = document.getElementById('spritesheetDownload');
+    download.href = url;
+    download.style.display = 'inline-block';
+    
+    // Clean up previous URL
+    if (download.dataset.previousUrl) {
+      URL.revokeObjectURL(download.dataset.previousUrl);
+    }
+    download.dataset.previousUrl = url;
+  });
+
+  // Show result
+  document.getElementById('spritesheetResult').style.display = 'block';
+  
+  showNotification(`Spritesheet generated! ${spritesheetBatches.length} batches, ${spritesheetImages.length} total sprites.`, "success");
+}

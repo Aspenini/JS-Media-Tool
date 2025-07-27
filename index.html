@@ -54,6 +54,7 @@
     <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
     <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
     <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
+    <button class="tab-button" onclick="openTab('spritesheetTab')">Spritesheet</button>
     <button class="tab-button" onclick="openTab('compressionTab')">Compression</button>
     <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
   </div>
@@ -211,6 +212,80 @@
     <div id="videoPreview" class="video-preview" style="display: none;">
       <video id="generatedVideo" controls style="display: none;"></video>
       <a id="videoDownload" class="download-link" download="generated_video.mp4" style="display: none;">Download Video</a>
+    </div>
+  </div>
+
+  <div id="spritesheetTab" class="tabcontent">
+    <h2>Spritesheet Generator</h2>
+    
+    <!-- File Upload Section -->
+    <div class="spritesheet-upload-section">
+      <div class="upload-controls">
+        <input type="file" id="spritesheetInput" accept="image/*" multiple onchange="loadSpritesheetImages(this.files)">
+        <button class="clear-btn" onclick="clearSpritesheetImages()" title="Clear All">
+          <span>🗑️</span>
+        </button>
+      </div>
+      <div class="file-info">Upload multiple images to create a spritesheet • Each upload creates a new batch in its own row</div>
+    </div>
+
+    <!-- Grid Settings -->
+    <div id="spritesheetSettings" class="spritesheet-settings" style="display: none;">
+      <h3>Grid Settings</h3>
+      
+      <div class="grid-size-controls">
+        <div class="input-group">
+          <label for="gridColumns">Columns:</label>
+          <input type="number" id="gridColumns" value="4" min="1" max="20" onchange="updateSpritesheetPreview()">
+        </div>
+        
+        <div class="input-group">
+          <label for="gridRows">Rows:</label>
+          <input type="number" id="gridRows" value="4" min="1" max="20" onchange="updateSpritesheetPreview()">
+        </div>
+        
+        <div class="input-group">
+          <label for="cellSize">Cell Size:</label>
+          <input type="number" id="cellSize" value="64" min="16" max="512" onchange="updateSpritesheetPreview()">
+          <span class="unit-display">px</span>
+        </div>
+      </div>
+
+      <div class="spritesheet-options">
+        <div class="input-group">
+          <label for="spritePadding">Padding:</label>
+          <input type="number" id="spritePadding" value="0" min="0" max="32" onchange="updateSpritesheetPreview()">
+          <span class="unit-display">px</span>
+        </div>
+        
+        <div class="background-fill-section">
+          <div class="checkbox-group">
+            <input type="checkbox" id="spritesheetBackground" onchange="updateSpritesheetPreview()">
+            <label for="spritesheetBackground">Background Fill</label>
+          </div>
+          
+          <div class="color-picker-container">
+            <input type="color" id="spritesheetBgColor" value="#ffffff" onchange="updateSpritesheetPreview()">
+            <label for="spritesheetBgColor">Background Color</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Grid -->
+    <div id="spritesheetGrid" class="spritesheet-grid" style="display: none;">
+      <h3>Arrange Your Sprites (Drag to reorder)</h3>
+      <div id="spritesheetItems" class="spritesheet-items"></div>
+    </div>
+
+    <!-- Generate Button -->
+    <button id="generateSpritesheetBtn" class="generate-btn" onclick="generateSpritesheet()" style="display: none;">Generate Spritesheet</button>
+
+    <!-- Preview and Download -->
+    <div id="spritesheetResult" class="spritesheet-result" style="display: none;">
+      <h3>Generated Spritesheet</h3>
+      <canvas id="spritesheetCanvas"></canvas>
+      <a id="spritesheetDownload" class="download-link" download="spritesheet.png" style="display: none;">Download Spritesheet</a>
     </div>
   </div>
 
