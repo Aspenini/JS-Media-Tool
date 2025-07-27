@@ -2830,3 +2830,335 @@ function generateSpritesheet() {
   
   showNotification(`Spritesheet generated! ${spritesheetBatches.length} batches, ${spritesheetImages.length} total sprites.`, "success");
 }
+
+// Color Palette Tool Logic
+let paletteImage = null;
+let originalImageData = null;
+
+// Predefined color palettes
+const colorPalettes = {
+  '8bit': [
+    // 8-bit VGA palette (256 colors)
+    '#000000', '#0000AA', '#00AA00', '#00AAAA', '#AA0000', '#AA00AA', '#AA5500', '#AAAAAA',
+    '#555555', '#5555FF', '#55FF55', '#55FFFF', '#FF5555', '#FF55FF', '#FFFF55', '#FFFFFF',
+    // Add more 8-bit colors (simplified for demo)
+    ...Array.from({length: 240}, (_, i) => {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    })
+  ],
+  '16bit': [
+    '#000000', '#1D2B53', '#7E2553', '#008751', '#AB5236', '#5F574F', '#C2C3C7', '#FFF1E8',
+    '#FF004D', '#FFA300', '#FFEC27', '#00E756', '#29ADFF', '#83769C', '#FF77A8', '#FFCCAA'
+  ],
+  'nes': [
+    '#000000', '#FFFFFF', '#7C7C7C', '#BCBCBC', '#880000', '#A80000', '#F83800', '#F83800',
+    '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800',
+    '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800',
+    '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800',
+    '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800',
+    '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800',
+    '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800', '#F83800'
+  ],
+  'gameboy': [
+    '#0F380F', '#306230', '#8BAC0F', '#9BBC0F'
+  ],
+  'cga': [
+    '#000000', '#00AA00', '#AA0000', '#AAAA00'
+  ],
+  'ega': [
+    '#000000', '#0000AA', '#00AA00', '#00AAAA', '#AA0000', '#AA00AA', '#AA5500', '#AAAAAA',
+    '#555555', '#5555FF', '#55FF55', '#55FFFF', '#FF5555', '#FF55FF', '#FFFF55', '#FFFFFF'
+  ],
+  'vga': [
+    // VGA 256-color palette (simplified)
+    '#000000', '#0000AA', '#00AA00', '#00AAAA', '#AA0000', '#AA00AA', '#AA5500', '#AAAAAA',
+    '#555555', '#5555FF', '#55FF55', '#55FFFF', '#FF5555', '#FF55FF', '#FFFF55', '#FFFFFF',
+    // Add more VGA colors
+    ...Array.from({length: 240}, (_, i) => {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    })
+  ],
+  'dawnbringer16': [
+    '#140c1c', '#442434', '#30346d', '#4e4a4e', '#854c30', '#346856', '#d04648', '#757161',
+    '#597dce', '#d27d2c', '#8595a1', '#6daa2c', '#d2aa99', '#6dc2ca', '#dad45e', '#deeed6'
+  ],
+  'pico8': [
+    '#000000', '#1D2B53', '#7E2553', '#008751', '#AB5236', '#5F574F', '#C2C3C7', '#FFF1E8',
+    '#FF004D', '#FFA300', '#FFEC27', '#00E756', '#29ADFF', '#83769C', '#FF77A8', '#FFCCAA'
+  ],
+  'aap64': [
+    // AAP-64 palette (64 colors)
+    '#000000', '#1A1A1A', '#2A2A2A', '#3A3A3A', '#4A4A4A', '#5A5A5A', '#6A6A6A', '#7A7A7A',
+    '#8A8A8A', '#9A9A9A', '#AAAAAA', '#BABABA', '#CACACA', '#DADADA', '#EAEAEA', '#FFFFFF',
+    '#000055', '#0000AA', '#0000FF', '#005500', '#005555', '#0055AA', '#0055FF', '#00AA00',
+    '#00AA55', '#00AAAA', '#00AAFF', '#00FF00', '#00FF55', '#00FFAA', '#00FFFF', '#550000',
+    '#550055', '#5500AA', '#5500FF', '#555500', '#555555', '#5555AA', '#5555FF', '#55AA00',
+    '#55AA55', '#55AAAA', '#55AAFF', '#55FF00', '#55FF55', '#55FFAA', '#55FFFF', '#AA0000',
+    '#AA0055', '#AA00AA', '#AA00FF', '#AA5500', '#AA5555', '#AA55AA', '#AA55FF', '#AAAA00',
+    '#AAAA55', '#AAAAAA', '#AAAAFF', '#AAFF00', '#AAFF55', '#AAFFAA', '#AAFFFF', '#FF0000',
+    '#FF0055', '#FF00AA', '#FF00FF', '#FF5500', '#FF5555', '#FF55AA', '#FF55FF', '#FFAA00'
+  ],
+  'arnes16': [
+    '#000000', '#9D9D9D', '#FFFFFF', '#BE2633', '#E06F8B', '#493C2B', '#A46422', '#EB8931',
+    '#F7E26B', '#A3E04D', '#2B3F4F', '#44891A', '#A3AAAE', '#C3D64D', '#FF9D3C', '#D4CC9E'
+  ]
+};
+
+function loadPaletteImage(files) {
+  if (!files || files.length === 0) {
+    showNotification("Please select an image.", "error");
+    return;
+  }
+
+  const file = files[0];
+  if (!file.type.startsWith('image/')) {
+    showNotification("Please select a valid image file.", "error");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      paletteImage = img;
+      originalImageData = null; // Will be set when processing
+      
+      showPaletteSettings();
+      updatePalettePreview();
+      showNotification("Image loaded successfully.", "success");
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPaletteSettings() {
+  document.getElementById('paletteSettings').style.display = 'block';
+  document.getElementById('paletteComparison').style.display = 'block';
+}
+
+function updatePalettePreview() {
+  if (!paletteImage) return;
+
+  const paletteType = document.getElementById('paletteType').value;
+  const palette = colorPalettes[paletteType];
+  
+  // Update palette colors display
+  const paletteColors = document.getElementById('paletteColors');
+  paletteColors.innerHTML = '';
+  
+  palette.forEach(color => {
+    const colorDiv = document.createElement('div');
+    colorDiv.className = 'palette-color';
+    colorDiv.style.backgroundColor = color;
+    colorDiv.title = color;
+    paletteColors.appendChild(colorDiv);
+  });
+
+  // Process the image
+  processImageWithPalette();
+}
+
+function processImageWithPalette() {
+  if (!paletteImage) return;
+
+  const paletteType = document.getElementById('paletteType').value;
+  const dithering = document.getElementById('dithering').value;
+  const colorMatching = document.getElementById('colorMatching').value;
+  
+  const palette = colorPalettes[paletteType];
+  
+  // Create canvases
+  const originalCanvas = document.getElementById('originalCanvas');
+  const paletteCanvas = document.getElementById('paletteCanvas');
+  
+  // Set canvas sizes
+  const maxSize = 400;
+  const scale = Math.min(maxSize / paletteImage.width, maxSize / paletteImage.height);
+  const width = Math.floor(paletteImage.width * scale);
+  const height = Math.floor(paletteImage.height * scale);
+  
+  originalCanvas.width = width;
+  originalCanvas.height = height;
+  paletteCanvas.width = width;
+  paletteCanvas.height = height;
+  
+  const originalCtx = originalCanvas.getContext('2d');
+  const paletteCtx = paletteCanvas.getContext('2d');
+  
+  // Draw original image
+  originalCtx.drawImage(paletteImage, 0, 0, width, height);
+  
+  // Get image data
+  const imageData = originalCtx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  
+  // Convert to palette
+  const convertedData = new Uint8ClampedArray(data.length);
+  
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+    
+    // Find closest color in palette
+    const closestColor = findClosestColor(r, g, b, palette, colorMatching);
+    
+    // Convert hex to RGB
+    const hexColor = closestColor.replace('#', '');
+    const paletteR = parseInt(hexColor.substr(0, 2), 16);
+    const paletteG = parseInt(hexColor.substr(2, 2), 16);
+    const paletteB = parseInt(hexColor.substr(4, 2), 16);
+    
+    convertedData[i] = paletteR;
+    convertedData[i + 1] = paletteG;
+    convertedData[i + 2] = paletteB;
+    convertedData[i + 3] = a;
+  }
+  
+  // Apply dithering if selected
+  if (dithering !== 'none') {
+    applyDithering(convertedData, width, height, palette, dithering);
+  }
+  
+  // Create new image data and draw
+  const newImageData = new ImageData(convertedData, width, height);
+  paletteCtx.putImageData(newImageData, 0, 0);
+  
+  // Set up download
+  paletteCanvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const download = document.getElementById('paletteDownload');
+    download.href = url;
+    download.style.display = 'inline-block';
+    
+    // Clean up previous URL
+    if (download.dataset.previousUrl) {
+      URL.revokeObjectURL(download.dataset.previousUrl);
+    }
+    download.dataset.previousUrl = url;
+  });
+}
+
+function findClosestColor(r, g, b, palette, method) {
+  let closestColor = palette[0];
+  let minDistance = Infinity;
+  
+  palette.forEach(color => {
+    const hexColor = color.replace('#', '');
+    const paletteR = parseInt(hexColor.substr(0, 2), 16);
+    const paletteG = parseInt(hexColor.substr(2, 2), 16);
+    const paletteB = parseInt(hexColor.substr(4, 2), 16);
+    
+    let distance;
+    
+    switch (method) {
+      case 'euclidean':
+        distance = Math.sqrt(
+          Math.pow(r - paletteR, 2) + 
+          Math.pow(g - paletteG, 2) + 
+          Math.pow(b - paletteB, 2)
+        );
+        break;
+      case 'manhattan':
+        distance = Math.abs(r - paletteR) + Math.abs(g - paletteG) + Math.abs(b - paletteB);
+        break;
+      case 'perceptual':
+        // Simplified perceptual distance (CIE2000 would be more complex)
+        const deltaR = r - paletteR;
+        const deltaG = g - paletteG;
+        const deltaB = b - paletteB;
+        distance = Math.sqrt(deltaR * deltaR * 0.299 + deltaG * deltaG * 0.587 + deltaB * deltaB * 0.114);
+        break;
+      default:
+        distance = Math.sqrt(
+          Math.pow(r - paletteR, 2) + 
+          Math.pow(g - paletteG, 2) + 
+          Math.pow(b - paletteB, 2)
+        );
+    }
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestColor = color;
+    }
+  });
+  
+  return closestColor;
+}
+
+function applyDithering(imageData, width, height, palette, method) {
+  // Simplified dithering implementation
+  // In a full implementation, this would apply Floyd-Steinberg, Bayer, etc.
+  
+  if (method === 'floyd-steinberg') {
+    // Basic Floyd-Steinberg dithering
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4;
+        const oldR = imageData[idx];
+        const oldG = imageData[idx + 1];
+        const oldB = imageData[idx + 2];
+        
+        // Find closest color
+        const closestColor = findClosestColor(oldR, oldG, oldB, palette, 'euclidean');
+        const hexColor = closestColor.replace('#', '');
+        const newR = parseInt(hexColor.substr(0, 2), 16);
+        const newG = parseInt(hexColor.substr(2, 2), 16);
+        const newB = parseInt(hexColor.substr(4, 2), 16);
+        
+        // Set new color
+        imageData[idx] = newR;
+        imageData[idx + 1] = newG;
+        imageData[idx + 2] = newB;
+        
+        // Calculate error
+        const errR = oldR - newR;
+        const errG = oldG - newG;
+        const errB = oldB - newB;
+        
+        // Distribute error to neighboring pixels
+        if (x + 1 < width) {
+          imageData[idx + 4] = Math.max(0, Math.min(255, imageData[idx + 4] + errR * 7 / 16));
+          imageData[idx + 5] = Math.max(0, Math.min(255, imageData[idx + 5] + errG * 7 / 16));
+          imageData[idx + 6] = Math.max(0, Math.min(255, imageData[idx + 6] + errB * 7 / 16));
+        }
+        if (x - 1 >= 0 && y + 1 < height) {
+          const idx2 = ((y + 1) * width + (x - 1)) * 4;
+          imageData[idx2] = Math.max(0, Math.min(255, imageData[idx2] + errR * 3 / 16));
+          imageData[idx2 + 1] = Math.max(0, Math.min(255, imageData[idx2 + 1] + errG * 3 / 16));
+          imageData[idx2 + 2] = Math.max(0, Math.min(255, imageData[idx2 + 2] + errB * 3 / 16));
+        }
+        if (y + 1 < height) {
+          const idx2 = ((y + 1) * width + x) * 4;
+          imageData[idx2] = Math.max(0, Math.min(255, imageData[idx2] + errR * 5 / 16));
+          imageData[idx2 + 1] = Math.max(0, Math.min(255, imageData[idx2 + 1] + errG * 5 / 16));
+          imageData[idx2 + 2] = Math.max(0, Math.min(255, imageData[idx2 + 2] + errB * 5 / 16));
+        }
+        if (x + 1 < width && y + 1 < height) {
+          const idx2 = ((y + 1) * width + (x + 1)) * 4;
+          imageData[idx2] = Math.max(0, Math.min(255, imageData[idx2] + errR * 1 / 16));
+          imageData[idx2 + 1] = Math.max(0, Math.min(255, imageData[idx2 + 1] + errG * 1 / 16));
+          imageData[idx2 + 2] = Math.max(0, Math.min(255, imageData[idx2 + 2] + errB * 1 / 16));
+        }
+      }
+    }
+  }
+  // Other dithering methods would be implemented here
+}
+
+function clearPaletteImage() {
+  paletteImage = null;
+  originalImageData = null;
+  document.getElementById('paletteInput').value = '';
+  document.getElementById('paletteSettings').style.display = 'none';
+  document.getElementById('paletteComparison').style.display = 'none';
+  showNotification("Image cleared.", "success");
+}

@@ -55,6 +55,7 @@
     <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
     <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
     <button class="tab-button" onclick="openTab('spritesheetTab')">Spritesheet</button>
+    <button class="tab-button" onclick="openTab('paletteTab')">Color Palette</button>
     <button class="tab-button" onclick="openTab('compressionTab')">Compression</button>
     <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
   </div>
@@ -286,6 +287,87 @@
       <h3>Generated Spritesheet</h3>
       <canvas id="spritesheetCanvas"></canvas>
       <a id="spritesheetDownload" class="download-link" download="spritesheet.png" style="display: none;">Download Spritesheet</a>
+    </div>
+  </div>
+
+  <div id="paletteTab" class="tabcontent">
+    <h2>Color Palette Converter</h2>
+    
+    <!-- File Upload Section -->
+    <div class="palette-upload-section">
+      <div class="upload-controls">
+        <input type="file" id="paletteInput" accept="image/*" onchange="loadPaletteImage(this.files)">
+        <button class="clear-btn" onclick="clearPaletteImage()" title="Clear Image">
+          <span>🗑️</span>
+        </button>
+      </div>
+      <div class="file-info">Upload an image to apply retro color palettes</div>
+    </div>
+
+    <!-- Palette Selection -->
+    <div id="paletteSettings" class="palette-settings" style="display: none;">
+      <h3>Palette Settings</h3>
+      
+      <div class="palette-selection">
+        <div class="input-group">
+          <label for="paletteType">Color Palette:</label>
+          <select id="paletteType" onchange="updatePalettePreview()">
+            <option value="8bit">8-bit (256 colors) - Classic PC gaming</option>
+            <option value="16bit">16-bit (16 colors) - PICO-8 style</option>
+            <option value="nes">NES (54 colors) - Nintendo Entertainment System</option>
+            <option value="gameboy">Game Boy (4 colors) - Classic monochrome</option>
+            <option value="cga">CGA (4 colors) - Early PC graphics</option>
+            <option value="ega">EGA (16 colors) - Enhanced Graphics Adapter</option>
+            <option value="vga">VGA (256 colors) - Video Graphics Array</option>
+            <option value="dawnbringer16">DawnBringer 16 - Popular pixel art palette</option>
+            <option value="pico8">PICO-8 (16 colors) - Fantasy console palette</option>
+            <option value="aap64">AAP-64 - 64-color palette</option>
+            <option value="arnes16">Arne's 16 - 16-color pixel art palette</option>
+          </select>
+        </div>
+        
+        <div class="palette-preview">
+          <h4>Selected Palette:</h4>
+          <div id="paletteColors" class="palette-colors"></div>
+        </div>
+      </div>
+
+      <div class="palette-options">
+        <div class="input-group">
+          <label for="dithering">Dithering:</label>
+          <select id="dithering" onchange="updatePalettePreview()">
+            <option value="none">None</option>
+            <option value="floyd-steinberg">Floyd-Steinberg</option>
+            <option value="ordered">Ordered (Bayer)</option>
+            <option value="atkinson">Atkinson</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <label for="colorMatching">Color Matching:</label>
+          <select id="colorMatching" onchange="updatePalettePreview()">
+            <option value="euclidean">Euclidean Distance</option>
+            <option value="perceptual">Perceptual (CIE2000)</option>
+            <option value="manhattan">Manhattan Distance</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Comparison -->
+    <div id="paletteComparison" class="palette-comparison" style="display: none;">
+      <h3>Before & After</h3>
+      <div class="comparison-container">
+        <div class="image-container">
+          <h4>Original</h4>
+          <canvas id="originalCanvas"></canvas>
+        </div>
+        <div class="image-container">
+          <h4>Palette Applied</h4>
+          <canvas id="paletteCanvas"></canvas>
+        </div>
+      </div>
+      <a id="paletteDownload" class="download-link" download="palette_image.png" style="display: none;">Download Converted Image</a>
     </div>
   </div>
 

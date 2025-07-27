@@ -652,6 +652,120 @@ input[type="checkbox"] {
   border-color: var(--primary);
 }
 
+/* Palette Tool Styles */
+.palette-upload-section {
+  margin-bottom: 2rem;
+}
+
+.palette-settings {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.palette-settings h3 {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.palette-selection {
+  margin-bottom: 1.5rem;
+}
+
+.palette-preview {
+  margin-top: 1rem;
+}
+
+.palette-preview h4 {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.palette-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: var(--background);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  min-height: 60px;
+}
+
+.palette-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.palette-color:hover {
+  transform: scale(1.2);
+  border-color: var(--primary);
+}
+
+.palette-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.palette-comparison {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.palette-comparison h3 {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.comparison-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.image-container {
+  text-align: center;
+}
+
+.image-container h4 {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.image-container canvas {
+  max-width: 100%;
+  max-height: 400px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+
+.image-container canvas:hover {
+  border-color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .comparison-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 /* CSV Visualizer Styles */
 .csv-preview {
   margin-top: 2rem;
