@@ -3162,3 +3162,468 @@ function clearPaletteImage() {
   document.getElementById('paletteComparison').style.display = 'none';
   showNotification("Image cleared.", "success");
 }
+
+// File Converter Logic
+let converterFile = null;
+let converterImage = null;
+let selectedFormat = null;
+
+// Event listeners for converter functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Quality slider handler
+  const qualitySlider = document.getElementById('conversionQuality');
+  const qualityValue = document.getElementById('qualityValue');
+  if (qualitySlider && qualityValue) {
+    qualitySlider.addEventListener('input', function() {
+      qualityValue.textContent = this.value + '%';
+    });
+  }
+
+  // Maintain aspect ratio handler
+  const maintainAspectRatio = document.getElementById('maintainAspectRatio');
+  const conversionWidth = document.getElementById('conversionWidth');
+  const conversionHeight = document.getElementById('conversionHeight');
+  
+  if (maintainAspectRatio && conversionWidth && conversionHeight) {
+    conversionWidth.addEventListener('input', function() {
+      if (maintainAspectRatio.checked && converterImage) {
+        const aspectRatio = converterImage.width / converterImage.height;
+        const newWidth = parseInt(this.value) || 0;
+        const newHeight = Math.round(newWidth / aspectRatio);
+        conversionHeight.value = newHeight;
+      }
+    });
+    
+    conversionHeight.addEventListener('input', function() {
+      if (maintainAspectRatio.checked && converterImage) {
+        const aspectRatio = converterImage.width / converterImage.height;
+        const newHeight = parseInt(this.value) || 0;
+        const newWidth = Math.round(newHeight * aspectRatio);
+        conversionWidth.value = newWidth;
+      }
+    });
+  }
+});
+
+function detectConversionOptions() {
+  const fileInput = document.getElementById('converterInput');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    showNotification('Please select a file first.', 'error');
+    return;
+  }
+  
+  if (!file.type.startsWith('image/')) {
+    showNotification('Please select an image file.', 'error');
+    return;
+  }
+  
+  converterFile = file;
+  
+  // Load image for analysis
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      converterImage = img;
+      displayConverterFileInfo(file, img);
+      showConversionOptions();
+      showNotification(`${file.name} loaded successfully!`, 'success');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function displayConverterFileInfo(file, img) {
+  const fileInfo = document.getElementById('converterFileInfo');
+  const fileDetails = document.getElementById('converterFileDetails');
+  
+  const fileSize = formatFileSize(file.size);
+  const fileType = file.type;
+  const fileName = file.name;
+  const dimensions = `${img.width} × ${img.height}`;
+  const aspectRatio = (img.width / img.height).toFixed(2);
+  
+  fileDetails.innerHTML = `
+    <div class="file-detail-item">
+      <span class="file-detail-label">Name</span>
+      <span class="file-detail-value">${fileName}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Size</span>
+      <span class="file-detail-value">${fileSize}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Type</span>
+      <span class="file-detail-value">${fileType}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Dimensions</span>
+      <span class="file-detail-value">${dimensions}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Aspect Ratio</span>
+      <span class="file-detail-value">${aspectRatio}</span>
+    </div>
+  `;
+  
+  fileInfo.style.display = 'block';
+  
+  // Set initial dimensions in settings
+  document.getElementById('conversionWidth').value = img.width;
+  document.getElementById('conversionHeight').value = img.height;
+}
+
+function showConversionOptions() {
+  document.getElementById('conversionOptions').style.display = 'block';
+  document.getElementById('conversionResult').style.display = 'none';
+}
+
+function selectConversionFormat(format) {
+  selectedFormat = format;
+  
+  // Update button states
+  document.querySelectorAll('.format-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  document.querySelector(`[data-format="${format}"]`).classList.add('selected');
+  
+  // Show settings
+  document.getElementById('formatSettings').style.display = 'block';
+  document.getElementById('convertButton').style.display = 'block';
+  
+  // Update settings based on format
+  updateFormatSettings(format);
+}
+
+function updateFormatSettings(format) {
+  const qualitySlider = document.getElementById('conversionQuality');
+  const qualityValue = document.getElementById('qualityValue');
+  
+  switch(format) {
+    case 'png':
+      qualitySlider.style.display = 'none';
+      qualityValue.style.display = 'none';
+      break;
+    case 'jpg':
+    case 'webp':
+      qualitySlider.style.display = 'block';
+      qualityValue.style.display = 'inline';
+      qualitySlider.value = 90;
+      qualityValue.textContent = '90%';
+      break;
+    case 'ico':
+      qualitySlider.style.display = 'none';
+      qualityValue.style.display = 'none';
+      // Set default icon sizes
+      document.getElementById('conversionWidth').value = 32;
+      document.getElementById('conversionHeight').value = 32;
+      break;
+    default:
+      qualitySlider.style.display = 'block';
+      qualityValue.style.display = 'inline';
+  }
+}
+
+function clearConverterFile() {
+  converterFile = null;
+  converterImage = null;
+  selectedFormat = null;
+  
+  document.getElementById('converterInput').value = '';
+  document.getElementById('converterFileInfo').style.display = 'none';
+  document.getElementById('conversionOptions').style.display = 'none';
+  document.getElementById('conversionResult').style.display = 'none';
+  
+  // Reset button states
+  document.querySelectorAll('.format-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  
+  showNotification('File cleared!', 'success');
+}
+
+async function performConversion() {
+  if (!converterFile || !converterImage || !selectedFormat) {
+    showNotification('Please select a file and format first.', 'error');
+    return;
+  }
+  
+  const convertButton = document.getElementById('convertButton');
+  convertButton.disabled = true;
+  convertButton.textContent = 'Converting...';
+  
+  try {
+    const quality = parseInt(document.getElementById('conversionQuality').value) / 100;
+    const width = parseInt(document.getElementById('conversionWidth').value) || converterImage.width;
+    const height = parseInt(document.getElementById('conversionHeight').value) || converterImage.height;
+    
+    let convertedData;
+    let convertedSize;
+    let originalSize = converterFile.size;
+    
+    switch(selectedFormat) {
+      case 'png':
+        convertedData = await convertToPNG(converterImage, width, height);
+        break;
+      case 'jpg':
+        convertedData = await convertToJPG(converterImage, width, height, quality);
+        break;
+      case 'webp':
+        convertedData = await convertToWebP(converterImage, width, height, quality);
+        break;
+      case 'ico':
+        convertedData = await convertToICO(converterImage, width, height);
+        break;
+      case 'svg':
+        convertedData = await convertToSVG(converterImage, width, height);
+        break;
+      case 'bmp':
+        convertedData = await convertToBMP(converterImage, width, height);
+        break;
+      default:
+        throw new Error(`Unsupported format: ${selectedFormat}`);
+    }
+    
+    // Calculate converted size
+    if (convertedData.startsWith('data:')) {
+      const base64 = convertedData.split(',')[1];
+      convertedSize = Math.ceil((base64.length * 3) / 4);
+    } else if (convertedData instanceof Blob) {
+      convertedSize = convertedData.size;
+    } else {
+      convertedSize = originalSize; // Fallback
+    }
+    
+    // Display results
+    displayConversionResults(originalSize, convertedSize, convertedData);
+    
+    showNotification(`File converted to ${selectedFormat.toUpperCase()} successfully!`, 'success');
+  } catch (error) {
+    console.error('Error converting file:', error);
+    showNotification('Error converting file: ' + error.message, 'error');
+  } finally {
+    convertButton.disabled = false;
+    convertButton.textContent = 'Convert File';
+  }
+}
+
+// Conversion functions
+async function convertToPNG(image, width, height) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Disable smoothing for pixel-perfect scaling
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, 0, 0, width, height);
+    
+    try {
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function convertToJPG(image, width, height, quality) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Fill with white background for JPG
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.drawImage(image, 0, 0, width, height);
+    
+    try {
+      const dataURL = canvas.toDataURL('image/jpeg', quality);
+      resolve(dataURL);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function convertToWebP(image, width, height, quality) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    ctx.drawImage(image, 0, 0, width, height);
+    
+    try {
+      const dataURL = canvas.toDataURL('image/webp', quality);
+      resolve(dataURL);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function convertToGIF(image, width, height) {
+  throw new Error("GIF conversion is not supported in this browser. Please use PNG or WebP format instead.");
+}
+
+async function convertToICO(image, width, height) {
+  // ICO is a container format that can contain multiple PNG images
+  // For simplicity, we'll create a single-size ICO
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    ctx.drawImage(image, 0, 0, width, height);
+    
+    try {
+      // Convert to PNG first, then wrap in ICO format
+      const pngData = canvas.toDataURL('image/png');
+      const icoData = createICOFromPNG(pngData, width, height);
+      resolve(icoData);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function createICOFromPNG(pngDataURL, width, height) {
+  // Extract PNG data
+  const base64 = pngDataURL.split(',')[1];
+  const pngData = atob(base64);
+  
+  // Create ICO header
+  const icoHeader = new ArrayBuffer(6 + 16); // 6 bytes header + 16 bytes directory entry
+  const headerView = new DataView(icoHeader);
+  
+  // ICO file header
+  headerView.setUint16(0, 0, true); // Reserved
+  headerView.setUint16(2, 1, true); // Type (1 = ICO)
+  headerView.setUint16(4, 1, true); // Number of images
+  
+  // Directory entry
+  headerView.setUint8(6, width === 256 ? 0 : width); // Width
+  headerView.setUint8(7, height === 256 ? 0 : height); // Height
+  headerView.setUint8(8, 0); // Color count (0 = no color table)
+  headerView.setUint8(9, 0); // Reserved
+  headerView.setUint16(10, 1, true); // Color planes
+  headerView.setUint16(12, 32, true); // Bits per pixel
+  headerView.setUint32(14, pngData.length, true); // Size of image data
+  headerView.setUint32(18, 22, true); // Offset to image data
+  
+  // Combine header and PNG data
+  const icoData = new Uint8Array(icoHeader.byteLength + pngData.length);
+  icoData.set(new Uint8Array(icoHeader), 0);
+  
+  // Convert PNG string to Uint8Array
+  const pngArray = new Uint8Array(pngData.length);
+  for (let i = 0; i < pngData.length; i++) {
+    pngArray[i] = pngData.charCodeAt(i);
+  }
+  icoData.set(pngArray, icoHeader.byteLength);
+  
+  return URL.createObjectURL(new Blob([icoData], { type: 'image/x-icon' }));
+}
+
+async function convertToICNS(image, width, height) {
+  throw new Error("ICNS conversion is not supported in this browser. Please use PNG or ICO format instead.");
+}
+
+async function convertToSVG(image, width, height) {
+  // Convert image to SVG by embedding as base64
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    ctx.drawImage(image, 0, 0, width, height);
+    
+    try {
+      const dataURL = canvas.toDataURL('image/png');
+      const base64 = dataURL.split(',')[1];
+      
+      const svg = `
+        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+          <image width="${width}" height="${height}" href="data:image/png;base64,${base64}"/>
+        </svg>
+      `;
+      
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+      resolve(URL.createObjectURL(svgBlob));
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function convertToTIFF(image, width, height) {
+  throw new Error("TIFF conversion is not supported in this browser. Please use PNG or WebP format instead.");
+}
+
+async function convertToBMP(image, width, height) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    ctx.drawImage(image, 0, 0, width, height);
+    
+    try {
+      const dataURL = canvas.toDataURL('image/bmp');
+      resolve(dataURL);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function convertToAVIF(image, width, height, quality) {
+  throw new Error("AVIF conversion is not supported in this browser. Please use WebP or PNG format instead.");
+}
+
+function displayConversionResults(originalSize, convertedSize, convertedData) {
+  const result = document.getElementById('conversionResult');
+  const preview = document.getElementById('convertedPreview');
+  const originalInfo = document.getElementById('originalInfo');
+  const convertedInfo = document.getElementById('convertedInfo');
+  const sizeReduction = document.getElementById('sizeReduction');
+  const download = document.getElementById('conversionDownload');
+  
+  // Calculate size reduction
+  const reduction = ((originalSize - convertedSize) / originalSize * 100).toFixed(1);
+  const reductionText = reduction > 0 ? `-${reduction}% (${formatFileSize(originalSize - convertedSize)} saved)` : `+${Math.abs(reduction)}% (${formatFileSize(convertedSize - originalSize)} larger)`;
+  
+  // Update info
+  originalInfo.textContent = `${formatFileSize(originalSize)}`;
+  convertedInfo.textContent = `${formatFileSize(convertedSize)}`;
+  sizeReduction.textContent = reductionText;
+  
+  // Update preview
+  preview.src = convertedData;
+  
+  // Update download link
+  const fileName = converterFile.name.replace(/\.[^/.]+$/, "");
+  download.href = convertedData;
+  download.download = `${fileName}.${selectedFormat}`;
+  download.style.display = 'inline-block';
+  
+  result.style.display = 'block';
+}

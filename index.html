@@ -34,8 +34,8 @@
   <meta name="discord:image" content="https://js-media-tool.com/preview.png">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="apple-touch-icon" href="img/favicon.png">
   
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
@@ -44,21 +44,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="Pizzicato.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jimp@0.22.10/browser/lib/jimp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pica@8.0.1/dist/pica.min.js"></script>
 </head>
 <body>
-  <h1 class="fade-in">JS Media Tool</h1>
-  
-  <div id="tabs" class="fade-in">
-    <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
-    <button class="tab-button" onclick="openTab('resizeTab')">Resize</button>
-    <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
-    <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
-    <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
-    <button class="tab-button" onclick="openTab('spritesheetTab')">Spritesheet</button>
-    <button class="tab-button" onclick="openTab('paletteTab')">Color Palette</button>
-    <button class="tab-button" onclick="openTab('compressionTab')">Compression</button>
-    <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
-  </div>
+  <div class="main-content">
+    <h1 class="fade-in">JS Media Tool</h1>
+    
+    <div id="tabs" class="fade-in">
+      <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
+      <button class="tab-button" onclick="openTab('resizeTab')">Resize</button>
+      <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
+      <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
+      <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
+      <button class="tab-button" onclick="openTab('spritesheetTab')">Spritesheet</button>
+      <button class="tab-button" onclick="openTab('paletteTab')">Color Palette</button>
+      <button class="tab-button" onclick="openTab('compressionTab')">Compression</button>
+      <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
+      <button class="tab-button" onclick="openTab('converterTab')">File Converter</button>
+    </div>
 
   <div id="scalerTab" class="tabcontent active">
     <h2>Scaler Tool</h2>
@@ -528,6 +532,153 @@
       <a id="downloadTableImage" class="download-link" download="csv_table_full.png" style="margin-top: 1rem;">Download Table as Image</a>
     </div>
   </div>
+
+  <div id="converterTab" class="tabcontent">
+    <h2>File Converter</h2>
+    
+    <!-- File Upload Section -->
+    <div class="converter-upload-section">
+      <div class="upload-controls">
+        <input type="file" id="converterInput" accept="image/*" onchange="detectConversionOptions()">
+        <button class="clear-btn" onclick="clearConverterFile()" title="Clear File">
+          <span>🗑️</span>
+        </button>
+      </div>
+      <div class="file-info">Upload an image to convert to different formats</div>
+    </div>
+
+    <!-- File Info Display -->
+    <div id="converterFileInfo" class="file-info-display" style="display: none;">
+      <h3>File Information</h3>
+      <div id="converterFileDetails" class="file-details"></div>
+    </div>
+
+    <!-- Conversion Options -->
+    <div id="conversionOptions" class="conversion-options" style="display: none;">
+      <h3>Convert To:</h3>
+      
+      <!-- Image Format Grid -->
+      <div class="format-grid">
+        <div class="format-category">
+          <h4>Common Formats</h4>
+          <div class="format-buttons">
+            <button class="format-btn" data-format="png" onclick="selectConversionFormat('png')">
+              <span class="format-icon">🖼️</span>
+              <span class="format-name">PNG</span>
+              <span class="format-desc">Lossless, transparent</span>
+            </button>
+            <button class="format-btn" data-format="jpg" onclick="selectConversionFormat('jpg')">
+              <span class="format-icon">📷</span>
+              <span class="format-name">JPG</span>
+              <span class="format-desc">Compressed, small size</span>
+            </button>
+            <button class="format-btn" data-format="webp" onclick="selectConversionFormat('webp')">
+              <span class="format-icon">🌐</span>
+              <span class="format-name">WebP</span>
+              <span class="format-desc">Modern, efficient</span>
+            </button>
+
+          </div>
+        </div>
+
+        <div class="format-category">
+          <h4>Icon Formats</h4>
+          <div class="format-buttons">
+            <button class="format-btn" data-format="ico" onclick="selectConversionFormat('ico')">
+              <span class="format-icon">🔗</span>
+              <span class="format-name">ICO</span>
+              <span class="format-desc">Windows icons</span>
+            </button>
+
+            <button class="format-btn" data-format="svg" onclick="selectConversionFormat('svg')">
+              <span class="format-icon">📐</span>
+              <span class="format-name">SVG</span>
+              <span class="format-desc">Vector graphics</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="format-category">
+          <h4>Professional Formats</h4>
+          <div class="format-buttons">
+
+            <button class="format-btn" data-format="bmp" onclick="selectConversionFormat('bmp')">
+              <span class="format-icon">💾</span>
+              <span class="format-name">BMP</span>
+              <span class="format-desc">Uncompressed bitmap</span>
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Format-specific settings -->
+      <div id="formatSettings" class="format-settings" style="display: none;">
+        <h4>Conversion Settings</h4>
+        <div class="settings-grid">
+          <div class="input-group">
+            <label for="conversionQuality">Quality:</label>
+            <input type="range" id="conversionQuality" min="1" max="100" value="90">
+            <span id="qualityValue">90%</span>
+          </div>
+          
+          <div class="input-group">
+            <label for="conversionWidth">Width:</label>
+            <input type="number" id="conversionWidth" placeholder="Auto">
+            <span class="unit-display">px</span>
+          </div>
+          
+          <div class="input-group">
+            <label for="conversionHeight">Height:</label>
+            <input type="number" id="conversionHeight" placeholder="Auto">
+            <span class="unit-display">px</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="maintainAspectRatio" checked>
+            <label for="maintainAspectRatio">Maintain Aspect Ratio</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Convert Button -->
+      <button id="convertButton" class="convert-btn" onclick="performConversion()" style="display: none;">Convert File</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="conversionResult" class="conversion-result" style="display: none;">
+      <h3>Conversion Complete</h3>
+      <div class="result-preview">
+        <img id="convertedPreview" alt="Converted Image">
+      </div>
+      <div class="result-info">
+        <div class="result-details">
+          <span class="result-label">Original:</span>
+          <span id="originalInfo"></span>
+        </div>
+        <div class="result-details">
+          <span class="result-label">Converted:</span>
+          <span id="convertedInfo"></span>
+        </div>
+        <div class="result-details">
+          <span class="result-label">Size Reduction:</span>
+          <span id="sizeReduction"></span>
+        </div>
+      </div>
+      <a id="conversionDownload" class="download-link" style="display: none;">Download Converted File</a>
+    </div>
+  </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <a href="https://github.com/Aspenini/JS-Media-Tool" target="_blank" class="github-link">
+        <img src="img/github.png" alt="GitHub" class="github-icon">
+        <span>View on GitHub</span>
+      </a>
+    </div>
+  </footer>
 
   <script src="script.js"></script>
 </body>
