@@ -1727,3 +1727,58 @@ input[type="checkbox"] {
 .github-link:hover .github-icon {
   filter: brightness(0) invert(1);
 }
+
+/* ICO-specific styles */
+.format-description {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ico-size-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.ico-size-category h5 {
+  color: var(--text);
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ico-size-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ico-size-options .checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ico-size-options .checkbox-group label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.ico-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .ico-size-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}

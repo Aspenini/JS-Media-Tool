@@ -188,6 +188,8 @@
       <input type="file" id="audioInput" accept="audio/*">
       <select id="audioEffect">
         <option value="vintageRadio">Vintage Radio (1940s-1950s)</option>
+        <option value="bitcrusher8">8-bit (Bitcrusher)</option>
+        <option value="bitcrusher16">16-bit (Bitcrusher)</option>
       </select>
       <button onclick="processAudio()">Generate Effect</button>
     </div>
@@ -539,12 +541,12 @@
     <!-- File Upload Section -->
     <div class="converter-upload-section">
       <div class="upload-controls">
-        <input type="file" id="converterInput" accept="image/*" onchange="detectConversionOptions()">
+        <input type="file" id="converterInput" accept="image/*,.ico" onchange="detectConversionOptions()">
         <button class="clear-btn" onclick="clearConverterFile()" title="Clear File">
           <span>🗑️</span>
         </button>
       </div>
-      <div class="file-info">Upload an image to convert to different formats</div>
+      <div class="file-info">Upload an image or ICO file to convert to different formats</div>
     </div>
 
     <!-- File Info Display -->
@@ -637,6 +639,61 @@
           <div class="checkbox-group">
             <input type="checkbox" id="maintainAspectRatio" checked>
             <label for="maintainAspectRatio">Maintain Aspect Ratio</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ICO-specific settings -->
+      <div id="icoSizeSettings" class="format-settings" style="display: none;">
+        <h4>Icon Sizes</h4>
+        <p class="format-description">Select the icon sizes to include in your ICO file. Multiple sizes are recommended for better compatibility.</p>
+        
+        <div class="ico-size-grid">
+          <div class="ico-size-category">
+            <h5>Standard Sizes</h5>
+            <div class="ico-size-options">
+              <div class="checkbox-group">
+                <input type="checkbox" id="ico16" name="icoSize" value="16">
+                <label for="ico16">16×16 px</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="ico32" name="icoSize" value="32">
+                <label for="ico32">32×32 px</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="ico48" name="icoSize" value="48">
+                <label for="ico48">48×48 px</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="ico64" name="icoSize" value="64">
+                <label for="ico64">64×64 px</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="ico-size-category">
+            <h5>High DPI Sizes</h5>
+            <div class="ico-size-options">
+              <div class="checkbox-group">
+                <input type="checkbox" id="ico128" name="icoSize" value="128">
+                <label for="ico128">128×128 px</label>
+              </div>
+              <div class="checkbox-group">
+                <input type="checkbox" id="ico256" name="icoSize" value="256">
+                <label for="ico256">256×256 px</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ico-options">
+          <div class="checkbox-group">
+            <input type="checkbox" id="icoTransparent" checked>
+            <label for="icoTransparent">Include transparency</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="icoOptimize" checked>
+            <label for="icoOptimize">Optimize file size</label>
           </div>
         </div>
       </div>

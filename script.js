@@ -245,6 +245,12 @@ async function processAudio() {
       case 'vintageRadio':
         processedBuffer = await applyVintageRadioEffect(audioBuffer);
         break;
+      case 'bitcrusher8':
+        processedBuffer = await applyBitcrusherEffect(audioBuffer, 8);
+        break;
+      case 'bitcrusher16':
+        processedBuffer = await applyBitcrusherEffect(audioBuffer, 16);
+        break;
       default:
         throw new Error("Unknown effect selected");
     }
@@ -254,7 +260,8 @@ async function processAudio() {
     const downloadLink = document.getElementById("audioDownload");
     
     // Convert to WAV and create download link
-    const wavBlob = audioBufferToWavBlob(processedBuffer);
+    const exportBitDepth = effect === 'bitcrusher8' ? 8 : 16;
+    const wavBlob = audioBufferToWavBlob(processedBuffer, exportBitDepth);
     const url = URL.createObjectURL(wavBlob);
     
     audioElement.src = url;
@@ -442,6 +449,36 @@ function createNoiseBuffer(context) {
   }
   
   return buffer;
+}
+
+async function applyBitcrusherEffect(buffer, targetBitDepth) {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const targetRate = targetBitDepth === 8 ? 11025 : 22050;
+  const holdInterval = Math.max(1, Math.round(sampleRate / targetRate));
+
+  const ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+  const output = ctx.createBuffer(numChannels, buffer.length, sampleRate);
+
+  for (let ch = 0; ch < numChannels; ch++) {
+    const inData = buffer.getChannelData(ch);
+    const outData = output.getChannelData(ch);
+
+    let held = 0;
+    for (let i = 0; i < inData.length; i++) {
+      if (i % holdInterval === 0) {
+        let s = inData[i];
+        s = Math.max(-1, Math.min(1, s));
+        const levels = Math.pow(2, targetBitDepth);
+        const normalized = (s + 1) / 2;
+        const quantized = Math.round(normalized * (levels - 1)) / (levels - 1);
+        held = quantized * 2 - 1;
+      }
+      outData[i] = held;
+    }
+  }
+
+  return output;
 }
 
 // Video Creator Logic
@@ -2241,8 +2278,8 @@ async function compressAudio() {
           const processedBuffer = await processPizzicatoSound(sound, sampleRate, channels);
           
           // Convert to WAV with appropriate bit depth
-          const bitDepth = preset === 'bestCompression' ? 8 : 16;
-          const outputBlob = audioBufferToWavBlob(processedBuffer, bitDepth);
+          const exportBitDepth = preset === 'bestCompression' ? 8 : 16;
+          const outputBlob = audioBufferToWavBlob(processedBuffer, exportBitDepth);
           const url = URL.createObjectURL(outputBlob);
           
           resolve(url);
@@ -3214,6 +3251,12 @@ function detectConversionOptions() {
     return;
   }
   
+  // Check if it's an ICO file
+  if (file.name.toLowerCase().endsWith('.ico') || file.type === 'image/x-icon') {
+    handleICOFile(file);
+    return;
+  }
+  
   if (!file.type.startsWith('image/')) {
     showNotification('Please select an image file.', 'error');
     return;
@@ -3234,6 +3277,34 @@ function detectConversionOptions() {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function handleICOFile(file) {
+  converterFile = file;
+  
+  parseICOFile(file).then(images => {
+    if (images.length === 0) {
+      showNotification('No valid images found in ICO file.', 'error');
+      return;
+    }
+    
+    // Use the largest image for preview and conversion
+    const largestImage = images.reduce((largest, current) => {
+      return (current.width * current.height) > (largest.width * largest.height) ? current : largest;
+    });
+    
+    // Load the largest image
+    const img = new Image();
+    img.onload = () => {
+      converterImage = img;
+      displayICOFileInfo(file, images, img);
+      showConversionOptions();
+      showNotification(`ICO file loaded with ${images.length} icon sizes!`, 'success');
+    };
+    img.src = largestImage.dataURL;
+  }).catch(error => {
+    showNotification(`Error reading ICO file: ${error.message}`, 'error');
+  });
 }
 
 function displayConverterFileInfo(file, img) {
@@ -3276,6 +3347,52 @@ function displayConverterFileInfo(file, img) {
   document.getElementById('conversionHeight').value = img.height;
 }
 
+function displayICOFileInfo(file, images, img) {
+  const fileInfo = document.getElementById('converterFileInfo');
+  const fileDetails = document.getElementById('converterFileDetails');
+  
+  const fileSize = formatFileSize(file.size);
+  const fileName = file.name;
+  const dimensions = `${img.width} × ${img.height}`;
+  const aspectRatio = (img.width / img.height).toFixed(2);
+  
+  // Create list of icon sizes
+  const iconSizes = images.map(img => `${img.width}×${img.height}`).join(', ');
+  
+  fileDetails.innerHTML = `
+    <div class="file-detail-item">
+      <span class="file-detail-label">Name</span>
+      <span class="file-detail-value">${fileName}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Size</span>
+      <span class="file-detail-value">${fileSize}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Type</span>
+      <span class="file-detail-value">ICO (Windows Icon)</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Icon Sizes</span>
+      <span class="file-detail-value">${iconSizes}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Largest Icon</span>
+      <span class="file-detail-value">${dimensions}</span>
+    </div>
+    <div class="file-detail-item">
+      <span class="file-detail-label">Aspect Ratio</span>
+      <span class="file-detail-value">${aspectRatio}</span>
+    </div>
+  `;
+  
+  fileInfo.style.display = 'block';
+  
+  // Set initial dimensions in settings
+  document.getElementById('conversionWidth').value = img.width;
+  document.getElementById('conversionHeight').value = img.height;
+}
+
 function showConversionOptions() {
   document.getElementById('conversionOptions').style.display = 'block';
   document.getElementById('conversionResult').style.display = 'none';
@@ -3301,11 +3418,17 @@ function selectConversionFormat(format) {
 function updateFormatSettings(format) {
   const qualitySlider = document.getElementById('conversionQuality');
   const qualityValue = document.getElementById('qualityValue');
+  const formatSettings = document.getElementById('formatSettings');
+  
+  // Hide all format-specific settings first
+  const icoSizeSettings = document.getElementById('icoSizeSettings');
+  if (icoSizeSettings) icoSizeSettings.style.display = 'none';
   
   switch(format) {
     case 'png':
       qualitySlider.style.display = 'none';
       qualityValue.style.display = 'none';
+      formatSettings.style.display = 'block';
       break;
     case 'jpg':
     case 'webp':
@@ -3313,17 +3436,23 @@ function updateFormatSettings(format) {
       qualityValue.style.display = 'inline';
       qualitySlider.value = 90;
       qualityValue.textContent = '90%';
+      formatSettings.style.display = 'block';
       break;
     case 'ico':
       qualitySlider.style.display = 'none';
       qualityValue.style.display = 'none';
-      // Set default icon sizes
-      document.getElementById('conversionWidth').value = 32;
-      document.getElementById('conversionHeight').value = 32;
+      formatSettings.style.display = 'none';
+      if (icoSizeSettings) {
+        icoSizeSettings.style.display = 'block';
+        // Set default selections
+        document.querySelectorAll('input[name="icoSize"][value="16"]').forEach(cb => cb.checked = true);
+        document.querySelectorAll('input[name="icoSize"][value="32"]').forEach(cb => cb.checked = true);
+      }
       break;
     default:
       qualitySlider.style.display = 'block';
       qualityValue.style.display = 'inline';
+      formatSettings.style.display = 'block';
   }
 }
 
@@ -3479,21 +3608,19 @@ async function convertToGIF(image, width, height) {
 }
 
 async function convertToICO(image, width, height) {
-  // ICO is a container format that can contain multiple PNG images
-  // For simplicity, we'll create a single-size ICO
+  // Enhanced ICO converter with support for multiple sizes and proper format
   return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = width;
-    canvas.height = height;
-    
-    ctx.drawImage(image, 0, 0, width, height);
-    
     try {
-      // Convert to PNG first, then wrap in ICO format
-      const pngData = canvas.toDataURL('image/png');
-      const icoData = createICOFromPNG(pngData, width, height);
+      // Get the selected ICO sizes from the UI
+      const selectedSizes = getSelectedICOSizes();
+      
+      if (selectedSizes.length === 0) {
+        reject(new Error('Please select at least one icon size'));
+        return;
+      }
+      
+      // Create ICO with multiple sizes
+      const icoData = createMultiSizeICO(image, selectedSizes);
       resolve(icoData);
     } catch (error) {
       reject(error);
@@ -3501,42 +3628,271 @@ async function convertToICO(image, width, height) {
   });
 }
 
-function createICOFromPNG(pngDataURL, width, height) {
-  // Extract PNG data
-  const base64 = pngDataURL.split(',')[1];
-  const pngData = atob(base64);
+function getSelectedICOSizes() {
+  const sizes = [];
+  const checkboxes = document.querySelectorAll('input[name="icoSize"]:checked');
+  
+  checkboxes.forEach(checkbox => {
+    const size = parseInt(checkbox.value);
+    if (size > 0) {
+      sizes.push(size);
+    }
+  });
+  
+  return sizes.sort((a, b) => a - b); // Sort ascending
+}
+
+// Create preview of ICO with all selected sizes
+function createICOPreview(image, sizes) {
+  const previewContainer = document.createElement('div');
+  previewContainer.className = 'ico-preview';
+  previewContainer.style.cssText = `
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  `;
+  
+  sizes.forEach(size => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = size;
+    canvas.height = size;
+    canvas.style.cssText = `
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 20% 20%;
+    `;
+    
+    // Disable image smoothing for crisp icons
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, 0, 0, size, size);
+    
+    const sizeLabel = document.createElement('div');
+    sizeLabel.textContent = `${size}×${size}`;
+    sizeLabel.style.cssText = `
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    `;
+    
+    const iconContainer = document.createElement('div');
+    iconContainer.appendChild(canvas);
+    iconContainer.appendChild(sizeLabel);
+    
+    previewContainer.appendChild(iconContainer);
+  });
+  
+  return previewContainer;
+}
+
+function createMultiSizeICO(image, sizes) {
+  const pngImages = [];
+  let totalOffset = 6 + (sizes.length * 16); // Header + directory entries
+  
+  // Get ICO options
+  const includeTransparency = document.getElementById('icoTransparent')?.checked ?? true;
+  const optimizeSize = document.getElementById('icoOptimize')?.checked ?? true;
+  
+  // Create PNG data for each size
+  sizes.forEach(size => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = size;
+    canvas.height = size;
+    
+    // Disable image smoothing for crisp icons
+    ctx.imageSmoothingEnabled = false;
+    
+    // Clear canvas with transparent background
+    if (includeTransparency) {
+      ctx.clearRect(0, 0, size, size);
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+    }
+    
+    ctx.drawImage(image, 0, 0, size, size);
+    
+    // Use different quality settings based on optimization
+    const quality = optimizeSize ? 0.9 : 1.0;
+    const pngDataURL = canvas.toDataURL('image/png', quality);
+    const base64 = pngDataURL.split(',')[1];
+    const pngData = atob(base64);
+    
+    pngImages.push({
+      size: size,
+      data: pngData,
+      offset: totalOffset
+    });
+    
+    totalOffset += pngData.length;
+  });
   
   // Create ICO header
-  const icoHeader = new ArrayBuffer(6 + 16); // 6 bytes header + 16 bytes directory entry
-  const headerView = new DataView(icoHeader);
+  const headerSize = 6 + (sizes.length * 16);
+  const icoData = new Uint8Array(headerSize + totalOffset - (6 + (sizes.length * 16)));
+  const headerView = new DataView(icoData.buffer);
   
   // ICO file header
   headerView.setUint16(0, 0, true); // Reserved
   headerView.setUint16(2, 1, true); // Type (1 = ICO)
-  headerView.setUint16(4, 1, true); // Number of images
+  headerView.setUint16(4, sizes.length, true); // Number of images
   
-  // Directory entry
-  headerView.setUint8(6, width === 256 ? 0 : width); // Width
-  headerView.setUint8(7, height === 256 ? 0 : height); // Height
-  headerView.setUint8(8, 0); // Color count (0 = no color table)
-  headerView.setUint8(9, 0); // Reserved
-  headerView.setUint16(10, 1, true); // Color planes
-  headerView.setUint16(12, 32, true); // Bits per pixel
-  headerView.setUint32(14, pngData.length, true); // Size of image data
-  headerView.setUint32(18, 22, true); // Offset to image data
+  // Create directory entries
+  let currentOffset = 6 + (sizes.length * 16);
   
-  // Combine header and PNG data
-  const icoData = new Uint8Array(icoHeader.byteLength + pngData.length);
-  icoData.set(new Uint8Array(icoHeader), 0);
-  
-  // Convert PNG string to Uint8Array
-  const pngArray = new Uint8Array(pngData.length);
-  for (let i = 0; i < pngData.length; i++) {
-    pngArray[i] = pngData.charCodeAt(i);
-  }
-  icoData.set(pngArray, icoHeader.byteLength);
+  pngImages.forEach((pngImage, index) => {
+    const entryOffset = 6 + (index * 16);
+    
+    // Directory entry
+    headerView.setUint8(entryOffset, pngImage.size === 256 ? 0 : pngImage.size); // Width
+    headerView.setUint8(entryOffset + 1, pngImage.size === 256 ? 0 : pngImage.size); // Height
+    headerView.setUint8(entryOffset + 2, 0); // Color count (0 = no color table)
+    headerView.setUint8(entryOffset + 3, 0); // Reserved
+    headerView.setUint16(entryOffset + 4, 1, true); // Color planes
+    headerView.setUint16(entryOffset + 6, 32, true); // Bits per pixel
+    headerView.setUint32(entryOffset + 8, pngImage.data.length, true); // Size of image data
+    headerView.setUint32(entryOffset + 12, currentOffset, true); // Offset to image data
+    
+    // Copy PNG data
+    const pngArray = new Uint8Array(pngImage.data.length);
+    for (let i = 0; i < pngImage.data.length; i++) {
+      pngArray[i] = pngImage.data.charCodeAt(i);
+    }
+    icoData.set(pngArray, currentOffset);
+    
+    currentOffset += pngImage.data.length;
+  });
   
   return URL.createObjectURL(new Blob([icoData], { type: 'image/x-icon' }));
+}
+
+// Function to read and parse existing ICO files
+function parseICOFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const buffer = e.target.result;
+        const view = new DataView(buffer);
+        
+        // Validate ICO file
+        if (!isValidICOFile(view)) {
+          reject(new Error('Invalid ICO file format'));
+          return;
+        }
+        
+        const numImages = view.getUint16(4, true);
+        if (numImages === 0 || numImages > 255) {
+          reject(new Error('Invalid number of images in ICO file'));
+          return;
+        }
+        
+        const images = [];
+        
+        // Parse directory entries
+        for (let i = 0; i < numImages; i++) {
+          const entryOffset = 6 + (i * 16);
+          const width = view.getUint8(entryOffset) || 256;
+          const height = view.getUint8(entryOffset + 1) || 256;
+          const colorCount = view.getUint8(entryOffset + 2);
+          const reserved = view.getUint8(entryOffset + 3);
+          const colorPlanes = view.getUint16(entryOffset + 4, true);
+          const bitsPerPixel = view.getUint16(entryOffset + 6, true);
+          const size = view.getUint32(entryOffset + 8, true);
+          const offset = view.getUint32(entryOffset + 12, true);
+          
+          // Validate entry
+          if (offset + size > buffer.byteLength) {
+            console.warn(`Skipping invalid image entry ${i + 1}: offset out of bounds`);
+            continue;
+          }
+          
+          // Extract PNG data
+          const pngData = new Uint8Array(buffer, offset, size);
+          
+          // Validate PNG header
+          if (pngData.length < 8 || !isValidPNG(pngData)) {
+            console.warn(`Skipping invalid PNG data in image entry ${i + 1}`);
+            continue;
+          }
+          
+          const pngBlob = new Blob([pngData], { type: 'image/png' });
+          const pngURL = URL.createObjectURL(pngBlob);
+          
+          images.push({
+            width,
+            height,
+            colorCount,
+            colorPlanes,
+            bitsPerPixel,
+            size,
+            dataURL: pngURL,
+            index: i
+          });
+        }
+        
+        if (images.length === 0) {
+          reject(new Error('No valid images found in ICO file'));
+          return;
+        }
+        
+        resolve(images);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read ICO file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Validate ICO file header
+function isValidICOFile(view) {
+  if (view.byteLength < 6) return false;
+  
+  const reserved = view.getUint16(0, true);
+  const type = view.getUint16(2, true);
+  const numImages = view.getUint16(4, true);
+  
+  return reserved === 0 && type === 1 && numImages > 0 && numImages <= 255;
+}
+
+// Validate PNG data
+function isValidPNG(data) {
+  if (data.length < 8) return false;
+  
+  // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+  const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  
+  for (let i = 0; i < 8; i++) {
+    if (data[i] !== pngSignature[i]) return false;
+  }
+  
+  return true;
+}
+
+// Extract individual icon from ICO file
+function extractIconFromICO(file, iconIndex = 0) {
+  return new Promise((resolve, reject) => {
+    parseICOFile(file).then(images => {
+      if (iconIndex >= images.length) {
+        reject(new Error(`Icon index ${iconIndex} out of range. File contains ${images.length} icons.`));
+        return;
+      }
+      
+      const icon = images[iconIndex];
+      resolve(icon);
+    }).catch(reject);
+  });
 }
 
 async function convertToICNS(image, width, height) {
