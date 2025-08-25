@@ -38,6 +38,8 @@ body {
   width: 100%;
 }
 
+#mobileNav { display: none; }
+
 h1 {
   font-size: 2.5rem;
   font-weight: 700;
