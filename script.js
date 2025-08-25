@@ -2,11 +2,7 @@ function openTab(tabId) {
   // Hide all tabs with animation
   document.querySelectorAll('.tabcontent').forEach(tab => {
     if (tab.id !== tabId) {
-      tab.style.opacity = '0';
-      tab.style.transform = 'translateY(20px)';
-      setTimeout(() => {
-        tab.style.display = 'none';
-      }, 300);
+      tab.style.display = 'none';
     }
   });
 
@@ -19,10 +15,6 @@ function openTab(tabId) {
   // Show selected tab with animation
   const selectedTab = document.getElementById(tabId);
   selectedTab.style.display = 'block';
-  // Force a reflow
-  selectedTab.offsetHeight;
-  selectedTab.style.opacity = '1';
-  selectedTab.style.transform = 'translateY(0)';
 }
 
 // Mobile menu

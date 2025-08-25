@@ -95,16 +95,10 @@ h2 {
   border: 2px solid var(--border);
   width: 100%;
   max-width: 800px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  will-change: opacity, transform;
 }
 
 .tabcontent.active {
   display: block;
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .input-group {
