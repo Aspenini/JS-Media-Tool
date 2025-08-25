@@ -1044,7 +1044,7 @@ async function generateTableImageBulk() {
   if (progressBar) progressBar.style.width = '0%';
   if (progressPct) progressPct.textContent = '0%';
   if (progressLabel) progressLabel.textContent = 'Processing...';
-  const zip = new JSZip();
+  const tarEntries = [];
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     try {
@@ -1117,7 +1117,7 @@ async function generateTableImageBulk() {
       const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       const buf = await pngBlob.arrayBuffer();
       const base = file.name.replace(/\.[^/.]+$/, '');
-      zip.file(`${base}_table.png`, buf);
+      tarEntries.push({ name: `${base}_table.png`, data: new Uint8Array(buf) });
     } catch (e) {
       console.warn('Skipping CSV file due to error:', file.name, e);
     }
@@ -1126,17 +1126,18 @@ async function generateTableImageBulk() {
     if (progressPct) progressPct.textContent = pct + '%';
     await new Promise(r => setTimeout(r, 10));
   }
-  if (progressLabel) progressLabel.textContent = 'Zipping...';
-  const zipBlob = await zip.generateAsync({ type: 'blob' });
-  const zipUrl = URL.createObjectURL(zipBlob);
+  if (progressLabel) progressLabel.textContent = 'Packaging...';
+  const tarBlob = createTarBlob(tarEntries);
+  const tarUrl = URL.createObjectURL(tarBlob);
   if (progressWrap) progressWrap.style.display = 'none';
   if (zipDownload) {
-    zipDownload.href = zipUrl;
-    zipDownload.download = `csv_tables_${files.length}files.zip`;
-    zipDownload.dataset.previousUrl = zipUrl;
+    zipDownload.href = tarUrl;
+    zipDownload.download = `csv_tables_${files.length}files.tar`;
+    zipDownload.dataset.previousUrl = tarUrl;
+    zipDownload.textContent = 'Download All (TAR)';
     zipDownload.style.display = 'inline-block';
   }
-  showNotification('CSV images ready. ZIP prepared.', 'success');
+  showNotification('CSV images ready. TAR prepared.', 'success');
 }
 
 function parseCSVLine(line) {
