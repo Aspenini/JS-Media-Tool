@@ -42,10 +42,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="Pizzicato.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jimp@0.22.10/browser/lib/jimp.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pica@8.0.1/dist/pica.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+  
 </head>
 <body>
   <div class="main-content">
@@ -53,13 +51,11 @@
     
     <div id="tabs" class="fade-in">
       <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
-      <button class="tab-button" onclick="openTab('resizeTab')">Resize</button>
       <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
       <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
       <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
-      <button class="tab-button" onclick="openTab('spritesheetTab')">Spritesheet</button>
       <button class="tab-button" onclick="openTab('paletteTab')">Color Palette</button>
-      <button class="tab-button" onclick="openTab('compressionTab')">Compression</button>
+      
       <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
       <button class="tab-button" onclick="openTab('converterTab')">File Converter</button>
     </div>
@@ -75,91 +71,6 @@
     <a id="scaleDownload" class="download-link" download="scaled.png" style="display: none;">Download Scaled Image</a>
   </div>
 
-  <div id="resizeTab" class="tabcontent">
-    <h2>Image Resizer</h2>
-    
-    <!-- Image Upload Section -->
-    <div class="resize-upload-section">
-      <div class="upload-controls">
-        <input type="file" id="resizeInput" accept="image/*" multiple onchange="loadResizeImages(this.files)">
-        <button class="clear-btn" onclick="clearAllImages()" title="Clear All">
-          <span>🗑️</span>
-        </button>
-      </div>
-      <div class="file-info">Max file size: 10 MB</div>
-    </div>
-
-    <!-- Resize Settings -->
-    <div class="resize-settings">
-      <h3>Resize Settings</h3>
-      
-      <div class="size-inputs">
-        <div class="input-group">
-          <label for="resizeWidth">Width:</label>
-          <input type="number" id="resizeWidth" value="256" min="1" max="10000">
-          <select id="resizeUnit">
-            <option value="px">px</option>
-            <option value="%">%</option>
-          </select>
-        </div>
-        
-        <div class="input-group">
-          <label for="resizeHeight">Height:</label>
-          <input type="number" id="resizeHeight" value="256" min="1" max="10000">
-          <span class="unit-display">px</span>
-        </div>
-      </div>
-
-      <div class="checkbox-group">
-        <input type="checkbox" id="lockAspectRatio">
-        <label for="lockAspectRatio">Lock Aspect Ratio</label>
-      </div>
-
-      <div class="background-fill-section">
-        <div class="checkbox-group">
-          <input type="checkbox" id="backgroundFill" checked>
-          <label for="backgroundFill">Background Fill</label>
-          <span class="help-icon" title="Add background color or transparency to fill empty space">?</span>
-        </div>
-        
-        <div class="background-options">
-          <div class="radio-group">
-            <input type="radio" id="pickColor" name="backgroundType" value="color">
-            <label for="pickColor">Pick a color</label>
-          </div>
-          <div class="radio-group">
-            <input type="radio" id="transparent" name="backgroundType" value="transparent" checked>
-            <label for="transparent">Transparent</label>
-            <span class="help-icon" title="Keep transparent background">?</span>
-          </div>
-        </div>
-        
-        <div class="color-picker-container" style="display: none;">
-          <input type="color" id="backgroundColor" value="#ffffff">
-          <label for="backgroundColor">Background Color</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Export Settings -->
-    <div class="export-settings">
-      <h3>Export Settings</h3>
-      <div class="input-group">
-        <label for="exportFormat">Save Image As:</label>
-        <select id="exportFormat">
-          <option value="png">PNG</option>
-          <option value="jpg">JPG</option>
-          <option value="webp">WebP</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Export Button -->
-    <button class="export-btn" onclick="exportResizedImages()">Export →</button>
-
-    <!-- Image Preview Grid -->
-    <div id="resizeImageGrid" class="image-grid"></div>
-  </div>
 
   <div id="slicerTab" class="tabcontent">
     <h2>Diagonal Image Slicer</h2>
@@ -185,17 +96,27 @@
   <div id="audioTab" class="tabcontent">
     <h2>Audio Effects</h2>
     <div class="input-group">
-      <input type="file" id="audioInput" accept="audio/*">
+      <input type="file" id="audioInput" accept="audio/*" multiple>
       <select id="audioEffect">
         <option value="vintageRadio">Vintage Radio (1940s-1950s)</option>
         <option value="bitcrusher8">8-bit (Bitcrusher)</option>
         <option value="bitcrusher16">16-bit (Bitcrusher)</option>
       </select>
-      <button onclick="processAudio()">Generate Effect</button>
+      <button onclick="processAudioBulk()">Generate Effect</button>
     </div>
     <div id="audioPreview" class="audio-preview">
       <audio id="processedAudio" controls style="display: none;"></audio>
-      <a id="audioDownload" class="download-link" download="processed_audio.mp3" style="display: none;">Download Processed Audio</a>
+      <a id="audioDownload" class="download-link" download="processed_audio.wav" style="display: none;">Download Processed Audio</a>
+      <div id="audioProgress" style="width: 100%; display: none; gap: 0.5rem;">
+        <div style="display:flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem;">
+          <span id="audioProgressLabel">Processing...</span>
+          <span id="audioProgressPct">0%</span>
+        </div>
+        <div style="width: 100%; height: 10px; background: var(--background); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
+          <div id="audioProgressBar" style="height: 100%; width: 0%; background: var(--primary);"></div>
+        </div>
+      </div>
+      <a id="audioZipDownload" class="download-link" style="display: none;">Download All (ZIP)</a>
     </div>
   </div>
 
@@ -222,79 +143,6 @@
     </div>
   </div>
 
-  <div id="spritesheetTab" class="tabcontent">
-    <h2>Spritesheet Generator</h2>
-    
-    <!-- File Upload Section -->
-    <div class="spritesheet-upload-section">
-      <div class="upload-controls">
-        <input type="file" id="spritesheetInput" accept="image/*" multiple onchange="loadSpritesheetImages(this.files)">
-        <button class="clear-btn" onclick="clearSpritesheetImages()" title="Clear All">
-          <span>🗑️</span>
-        </button>
-      </div>
-      <div class="file-info">Upload multiple images to create a spritesheet • Each upload creates a new batch in its own row</div>
-    </div>
-
-    <!-- Grid Settings -->
-    <div id="spritesheetSettings" class="spritesheet-settings" style="display: none;">
-      <h3>Grid Settings</h3>
-      
-      <div class="grid-size-controls">
-        <div class="input-group">
-          <label for="gridColumns">Columns:</label>
-          <input type="number" id="gridColumns" value="4" min="1" max="20" onchange="updateSpritesheetPreview()">
-        </div>
-        
-        <div class="input-group">
-          <label for="gridRows">Rows:</label>
-          <input type="number" id="gridRows" value="4" min="1" max="20" onchange="updateSpritesheetPreview()">
-        </div>
-        
-        <div class="input-group">
-          <label for="cellSize">Cell Size:</label>
-          <input type="number" id="cellSize" value="64" min="16" max="512" onchange="updateSpritesheetPreview()">
-          <span class="unit-display">px</span>
-        </div>
-      </div>
-
-      <div class="spritesheet-options">
-        <div class="input-group">
-          <label for="spritePadding">Padding:</label>
-          <input type="number" id="spritePadding" value="0" min="0" max="32" onchange="updateSpritesheetPreview()">
-          <span class="unit-display">px</span>
-        </div>
-        
-        <div class="background-fill-section">
-          <div class="checkbox-group">
-            <input type="checkbox" id="spritesheetBackground" onchange="updateSpritesheetPreview()">
-            <label for="spritesheetBackground">Background Fill</label>
-          </div>
-          
-          <div class="color-picker-container">
-            <input type="color" id="spritesheetBgColor" value="#ffffff" onchange="updateSpritesheetPreview()">
-            <label for="spritesheetBgColor">Background Color</label>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Image Grid -->
-    <div id="spritesheetGrid" class="spritesheet-grid" style="display: none;">
-      <h3>Arrange Your Sprites (Drag to reorder)</h3>
-      <div id="spritesheetItems" class="spritesheet-items"></div>
-    </div>
-
-    <!-- Generate Button -->
-    <button id="generateSpritesheetBtn" class="generate-btn" onclick="generateSpritesheet()" style="display: none;">Generate Spritesheet</button>
-
-    <!-- Preview and Download -->
-    <div id="spritesheetResult" class="spritesheet-result" style="display: none;">
-      <h3>Generated Spritesheet</h3>
-      <canvas id="spritesheetCanvas"></canvas>
-      <a id="spritesheetDownload" class="download-link" download="spritesheet.png" style="display: none;">Download Spritesheet</a>
-    </div>
-  </div>
 
   <div id="paletteTab" class="tabcontent">
     <h2>Color Palette Converter</h2>
@@ -377,162 +225,29 @@
     </div>
   </div>
 
-  <div id="compressionTab" class="tabcontent">
-    <h2>Media Compression</h2>
-    
-    <!-- File Upload Section -->
-    <div class="compression-upload-section">
-      <div class="upload-controls">
-        <input type="file" id="compressionInput" accept="image/*,video/*,audio/*" onchange="loadCompressionFile(this.files)">
-        <button class="clear-btn" onclick="clearCompressionFile()" title="Clear File">
-          <span>🗑️</span>
-        </button>
-      </div>
-      <div class="file-info">Supports: Images (PNG, JPG, WebP), Videos (MP4, WebM), Audio (MP3, WAV, OGG)</div>
-    </div>
-
-    <!-- File Info Display -->
-    <div id="compressionFileInfo" class="file-info-display" style="display: none;">
-      <h3>File Information</h3>
-      <div id="compressionFileDetails" class="file-details"></div>
-    </div>
-
-    <!-- Compression Settings -->
-    <div id="compressionSettings" class="compression-settings" style="display: none;">
-      <h3>Compression Settings</h3>
-      
-      <!-- Quick Settings -->
-      <div class="quick-settings">
-        <h4>Quick Settings</h4>
-        <div class="radio-group">
-          <input type="radio" id="bestQuality" name="compressionPreset" value="bestQuality" checked>
-          <label for="bestQuality">Best Quality</label>
-        </div>
-        <div class="radio-group">
-          <input type="radio" id="balanced" name="compressionPreset" value="balanced">
-          <label for="balanced">Balanced</label>
-        </div>
-        <div class="radio-group">
-          <input type="radio" id="bestCompression" name="compressionPreset" value="bestCompression">
-          <label for="bestCompression">Best Compression</label>
-        </div>
-      </div>
-
-      <!-- Advanced Options -->
-      <div class="advanced-options">
-        <div class="checkbox-group">
-          <input type="checkbox" id="advancedCompression">
-          <label for="advancedCompression">Advanced Options</label>
-        </div>
-        
-        <div id="advancedCompressionPanel" class="advanced-panel" style="display: none;">
-          <!-- Image Advanced Options -->
-          <div id="imageAdvancedOptions" class="media-options" style="display: none;">
-            <h4>Image Compression</h4>
-            <div class="input-group">
-              <label for="imageQuality">Quality (1-100):</label>
-              <input type="number" id="imageQuality" min="1" max="100" value="85">
-            </div>
-            <div class="input-group">
-              <label for="imageFormat">Output Format:</label>
-              <select id="imageFormat">
-                <option value="jpeg">JPEG</option>
-                <option value="png">PNG</option>
-                <option value="webp">WebP</option>
-              </select>
-            </div>
-            <div class="checkbox-group">
-              <input type="checkbox" id="imageProgressive">
-              <label for="imageProgressive">Progressive JPEG</label>
-            </div>
-          </div>
-
-          <!-- Video Advanced Options -->
-          <div id="videoAdvancedOptions" class="media-options" style="display: none;">
-            <h4>Video Compression</h4>
-            <div class="input-group">
-              <label for="videoBitrate">Bitrate (kbps):</label>
-              <input type="number" id="videoBitrate" min="100" max="10000" value="2000">
-            </div>
-            <div class="input-group">
-              <label for="videoFPS">Frame Rate:</label>
-              <input type="number" id="videoFPS" min="1" max="60" value="30">
-            </div>
-            <div class="input-group">
-              <label for="videoFormat">Output Format:</label>
-              <select id="videoFormat">
-                <option value="mp4">MP4</option>
-                <option value="webm">WebM</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label for="videoCodec">Codec:</label>
-              <select id="videoCodec">
-                <option value="h264">H.264</option>
-                <option value="vp8">VP8</option>
-                <option value="vp9">VP9</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Audio Advanced Options -->
-          <div id="audioAdvancedOptions" class="media-options" style="display: none;">
-            <h4>Audio Compression</h4>
-            <div class="input-group">
-              <label for="audioBitrate">Bitrate (kbps):</label>
-              <input type="number" id="audioBitrate" min="32" max="320" value="128">
-            </div>
-            <div class="input-group">
-              <label for="audioSampleRate">Sample Rate (Hz):</label>
-              <select id="audioSampleRate">
-                <option value="22050">22,050 Hz</option>
-                <option value="44100" selected>44,100 Hz</option>
-                <option value="48000">48,000 Hz</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label for="audioFormat">Output Format:</label>
-              <select id="audioFormat">
-                <option value="mp3">MP3</option>
-                <option value="wav">WAV</option>
-                <option value="ogg">OGG</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label for="audioChannels">Channels:</label>
-              <select id="audioChannels">
-                <option value="1">Mono</option>
-                <option value="2" selected>Stereo</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Compress Button -->
-    <button id="compressButton" class="compress-btn" onclick="compressFile()" style="display: none;">Compress File</button>
-
-    <!-- Results Section -->
-    <div id="compressionResults" class="compression-results" style="display: none;">
-      <h3>Compression Results</h3>
-      <div id="compressionComparison" class="compression-comparison"></div>
-      <div id="compressionPreview" class="compression-preview"></div>
-      <a id="compressionDownload" class="download-link" download="compressed_file" style="display: none;">Download Compressed File</a>
-    </div>
-  </div>
+  
 
   <div id="csvTab" class="tabcontent">
     <h2>CSV to Image</h2>
     <div class="input-group">
-      <input type="file" id="csvInput" accept=".csv">
-      <button id="generateBtn" onclick="generateTableImage()" disabled>Generate</button>
+      <input type="file" id="csvInput" accept=".csv" multiple>
+      <button id="generateBtn" onclick="generateTableImageBulk()" disabled>Generate</button>
     </div>
     <div id="imageResult" class="image-result" style="display: none; text-align: center; margin-top: 2rem;">
       <img id="tableImage" style="max-width: 100%; border-radius: 12px; border: 2px solid var(--border); background: white;" />
       <br />
       <a id="downloadTableImage" class="download-link" download="csv_table_full.png" style="margin-top: 1rem;">Download Table as Image</a>
     </div>
+    <div id="csvProgress" style="width: 100%; display: none; gap: 0.5rem; margin-top: 1rem;">
+      <div style="display:flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem;">
+        <span id="csvProgressLabel">Processing...</span>
+        <span id="csvProgressPct">0%</span>
+      </div>
+      <div style="width: 100%; height: 10px; background: var(--background); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
+        <div id="csvProgressBar" style="height: 100%; width: 0%; background: var(--primary);"></div>
+      </div>
+    </div>
+    <a id="csvZipDownload" class="download-link" style="display: none; margin-top: 1rem;">Download All (ZIP)</a>
   </div>
 
   <div id="converterTab" class="tabcontent">
