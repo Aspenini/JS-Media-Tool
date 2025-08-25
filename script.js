@@ -302,7 +302,7 @@ async function processAudio() {
   }
 }
 
-// Bulk audio processing
+// Bulk audio processing (packages results as .tar to avoid ZIP issues)
 async function processAudioBulk() {
   const files = Array.from(document.getElementById("audioInput").files || []);
   const effect = document.getElementById("audioEffect").value;
@@ -319,12 +319,17 @@ async function processAudioBulk() {
     const progressPct = document.getElementById('audioProgressPct');
     const progressLabel = document.getElementById('audioProgressLabel');
     const zipDownload = document.getElementById('audioZipDownload');
-    if (zipDownload) zipDownload.style.display = 'none';
+    if (zipDownload) {
+      if (zipDownload.dataset.previousUrl) {
+        try { URL.revokeObjectURL(zipDownload.dataset.previousUrl); } catch (e) {}
+      }
+      zipDownload.style.display = 'none';
+    }
     if (progressWrap) progressWrap.style.display = 'block';
     if (progressBar) progressBar.style.width = '0%';
     if (progressPct) progressPct.textContent = '0%';
     if (progressLabel) progressLabel.textContent = 'Processing...';
-    const zip = new JSZip();
+    const tarEntries = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const arrayBuffer = await file.arrayBuffer();
@@ -347,26 +352,97 @@ async function processAudioBulk() {
       const wavBlob = audioBufferToWavBlob(processedBuffer, exportBitDepth);
       const arrayBuf = await wavBlob.arrayBuffer();
       const outName = `${file.name.replace(/\.[^/.]+$/, "")}_${effect}.wav`;
-      zip.file(outName, arrayBuf);
+      tarEntries.push({ name: outName, data: new Uint8Array(arrayBuf) });
       const pct = Math.round(((i + 1) / files.length) * 100);
       if (progressBar) progressBar.style.width = pct + '%';
       if (progressPct) progressPct.textContent = pct + '%';
       await new Promise(r => setTimeout(r, 10));
     }
-    if (progressLabel) progressLabel.textContent = 'Zipping...';
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
-    const zipUrl = URL.createObjectURL(zipBlob);
+    if (progressLabel) progressLabel.textContent = 'Packaging...';
+    const tarBlob = createTarBlob(tarEntries);
+    const tarUrl = URL.createObjectURL(tarBlob);
     if (progressWrap) progressWrap.style.display = 'none';
     if (zipDownload) {
-      zipDownload.href = zipUrl;
-      zipDownload.download = `audio_${effect}_${files.length}files.zip`;
+      zipDownload.href = tarUrl;
+      zipDownload.download = `audio_${effect}_${files.length}files.tar`;
+      zipDownload.textContent = 'Download All (TAR)';
+      zipDownload.dataset.previousUrl = tarUrl;
       zipDownload.style.display = 'inline-block';
     }
-    showNotification(`${files.length} file(s) processed. ZIP ready to download.`, "success");
+    showNotification(`${files.length} file(s) processed. TAR ready to download.`, "success");
   } catch (error) {
     console.error('Bulk audio error:', error);
     showNotification('Error processing files: ' + error.message, 'error');
   }
+}
+
+// Minimal USTAR tar creator for packaging files without compression
+function createTarBlob(entries) {
+  const blocks = [];
+  const encoder = new TextEncoder();
+  function writeString(buf, offset, str, length) {
+    const bytes = encoder.encode(str);
+    const size = Math.min(bytes.length, length);
+    for (let i = 0; i < size; i++) buf[offset + i] = bytes[i];
+    for (let i = size; i < length; i++) buf[offset + i] = 0;
+  }
+  function writeOctal(buf, offset, value, length) {
+    const str = value.toString(8).padStart(length - 1, '0');
+    writeString(buf, offset, str, length - 1);
+    buf[offset + length - 1] = 0; // null terminator
+  }
+  function computeChecksum(header) {
+    let sum = 0;
+    for (let i = 0; i < 512; i++) sum += header[i];
+    return sum;
+  }
+  function splitName(name) {
+    // Attempt to split into prefix/name for long paths
+    if (name.length <= 100) return { name, prefix: '' };
+    const idx = name.lastIndexOf('/');
+    if (idx > 0 && idx < 156 && (name.length - idx - 1) <= 100) {
+      return { name: name.slice(idx + 1), prefix: name.slice(0, idx) };
+    }
+    // Fallback: truncate basename to 100 bytes
+    return { name: name.slice(-100), prefix: '' };
+  }
+  const mtime = Math.floor(Date.now() / 1000);
+  for (const entry of entries) {
+    const { name, data } = entry;
+    const header = new Uint8Array(512);
+    for (let i = 0; i < 512; i++) header[i] = 0;
+    const parts = splitName(name);
+    writeString(header, 0, parts.name, 100);               // name
+    writeString(header, 100, '0000777', 8);                // mode
+    writeString(header, 108, '0000000', 8);                // uid
+    writeString(header, 116, '0000000', 8);                // gid
+    writeOctal(header, 124, data.length, 12);              // size
+    writeOctal(header, 136, mtime, 12);                    // mtime
+    for (let i = 148; i < 156; i++) header[i] = 0x20;      // chksum as spaces
+    header[156] = '0'.charCodeAt(0);                       // typeflag '0'
+    writeString(header, 157, '', 100);                     // linkname
+    writeString(header, 257, 'ustar', 6);                  // magic 'ustar\0'
+    header[262] = '0'.charCodeAt(0); header[263] = '0'.charCodeAt(0); // version '00'
+    writeString(header, 265, 'user', 32);                  // uname
+    writeString(header, 297, 'group', 32);                 // gname
+    writeString(header, 329, '', 8);                       // devmajor
+    writeString(header, 337, '', 8);                       // devminor
+    writeString(header, 345, parts.prefix, 155);           // prefix
+    const checksum = computeChecksum(header);
+    // Write checksum: 6-digit octal, null, space
+    const chkStr = checksum.toString(8).padStart(6, '0');
+    writeString(header, 148, chkStr, 6);
+    header[154] = 0; // null
+    header[155] = 0x20; // space
+    blocks.push(header);
+    blocks.push(data);
+    const pad = (512 - (data.length % 512)) % 512;
+    if (pad) blocks.push(new Uint8Array(pad));
+  }
+  // Two empty blocks indicate EOF
+  blocks.push(new Uint8Array(512));
+  blocks.push(new Uint8Array(512));
+  return new Blob(blocks, { type: 'application/x-tar' });
 }
 
 function audioBufferToWavBlob(buffer, bitDepth = 16) {
