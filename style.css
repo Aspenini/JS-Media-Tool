@@ -774,6 +774,11 @@ input[type="checkbox"] {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+  #mobileNav { display: block; }
+  #tabs { display: none; }
+  .tabcontent { padding: 1.25rem; }
+  .input-group { gap: 0.75rem; }
+  button, input[type="file"], input[type="number"], select { font-size: 0.95rem; }
 }
 
 /* CSV Visualizer Styles */

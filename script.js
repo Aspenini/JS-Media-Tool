@@ -25,6 +25,29 @@ function openTab(tabId) {
   selectedTab.style.transform = 'translateY(0)';
 }
 
+// Mobile menu
+document.addEventListener('DOMContentLoaded', function() {
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', function() {
+      mobileMenu.style.display = mobileMenu.style.display === 'none' || mobileMenu.style.display === '' ? 'block' : 'none';
+    });
+  }
+});
+
+function selectMobileTab(tabId) {
+  openTab(tabId);
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (mobileMenu) mobileMenu.style.display = 'none';
+  // update active state on desktop buttons to mirror selection
+  const button = document.querySelector(`[onclick="openTab('${tabId}')"]`);
+  if (button) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+  }
+}
+
 // Scaler Tool Logic
 function scaleImage() {
   const fileInput = document.getElementById("scaleInput").files[0];
