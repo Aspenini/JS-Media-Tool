@@ -1029,6 +1029,101 @@ async function generateTableImageBulk() {
     showNotification('Please select one or more CSV files.', 'error');
     return;
   }
+  // If only one file is selected, generate a single PNG instead of a TAR
+  if (files.length === 1) {
+    const progressWrap = document.getElementById('csvProgress');
+    const progressBar = document.getElementById('csvProgressBar');
+    const progressPct = document.getElementById('csvProgressPct');
+    const progressLabel = document.getElementById('csvProgressLabel');
+    const tarLink = document.getElementById('csvZipDownload');
+    if (tarLink) tarLink.style.display = 'none';
+    if (progressWrap) progressWrap.style.display = 'block';
+    if (progressBar) progressBar.style.width = '0%';
+    if (progressPct) progressPct.textContent = '0%';
+    if (progressLabel) progressLabel.textContent = 'Processing...';
+    try {
+      const file = files[0];
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      if (lines.length < 2) throw new Error('No data rows');
+      const headers = parseCSVLine(lines[0]);
+      const rows = [];
+      for (let r = 1; r < lines.length; r++) {
+        const row = parseCSVLine(lines[r]);
+        if (row.length === headers.length) rows.push(row);
+      }
+      if (!rows.length) throw new Error('No valid rows');
+      const cellPadding = 16;
+      const font = '16px Inter, Arial, sans-serif';
+      const headerFont = 'bold 18px Inter, Arial, sans-serif';
+      const rowHeight = 36;
+      const headerHeight = 44;
+      const borderColor = '#334155';
+      const headerBg = '#6366f1';
+      const headerColor = '#fff';
+      const cellBg = '#1e293b';
+      const cellColor = '#f8fafc';
+      const measure = document.createElement('canvas').getContext('2d');
+      measure.font = font;
+      const colWidths = headers.map((h, colIdx) => {
+        let max = measure.measureText(h).width;
+        for (let row of rows) {
+          max = Math.max(max, measure.measureText(row[colIdx] || '').width);
+        }
+        return Math.ceil(max + cellPadding * 2);
+      });
+      const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+      const tableHeight = headerHeight + rowHeight * rows.length;
+      const canvas = document.createElement('canvas');
+      canvas.width = tableWidth;
+      canvas.height = tableHeight;
+      const c = canvas.getContext('2d');
+      // header
+      let x = 0;
+      c.font = headerFont;
+      c.textBaseline = 'middle';
+      for (let ci = 0; ci < headers.length; ci++) {
+        c.fillStyle = headerBg;
+        c.fillRect(x, 0, colWidths[ci], headerHeight);
+        c.strokeStyle = borderColor;
+        c.strokeRect(x, 0, colWidths[ci], headerHeight);
+        c.fillStyle = headerColor;
+        c.fillText(headers[ci], x + cellPadding, headerHeight / 2);
+        x += colWidths[ci];
+      }
+      // rows
+      c.font = font;
+      for (let r = 0; r < rows.length; r++) {
+        x = 0;
+        for (let ci = 0; ci < headers.length; ci++) {
+          c.fillStyle = cellBg;
+          c.fillRect(x, headerHeight + r * rowHeight, colWidths[ci], rowHeight);
+          c.strokeStyle = borderColor;
+          c.strokeRect(x, headerHeight + r * rowHeight, colWidths[ci], rowHeight);
+          c.fillStyle = cellColor;
+          c.fillText(rows[r][ci], x + cellPadding, headerHeight + r * rowHeight + rowHeight / 2);
+          x += colWidths[ci];
+        }
+      }
+      const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const url = URL.createObjectURL(pngBlob);
+      const img = document.getElementById('tableImage');
+      const link = document.getElementById('downloadTableImage');
+      if (img && link) {
+        img.src = url;
+        link.href = url;
+        link.download = `${file.name.replace(/\.[^/.]+$/, '')}_table.png`;
+        const result = document.getElementById('imageResult');
+        if (result) result.style.display = 'block';
+      }
+      if (progressWrap) progressWrap.style.display = 'none';
+      showNotification('CSV image ready.', 'success');
+    } catch (e) {
+      console.error('CSV single image error:', e);
+      showNotification('Error processing CSV: ' + e.message, 'error');
+    }
+    return;
+  }
   const progressWrap = document.getElementById('csvProgress');
   const progressBar = document.getElementById('csvProgressBar');
   const progressPct = document.getElementById('csvProgressPct');
