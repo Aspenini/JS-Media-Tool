@@ -765,6 +765,32 @@ input[type="checkbox"] {
   border-color: var(--primary);
 }
 
+/* Performance optimizations */
+.tabcontent {
+  contain: layout style paint;
+}
+
+.tabcontent:not(.active) {
+  contain: strict;
+}
+
+/* Textarea styles */
+textarea {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+textarea[readonly] {
+  cursor: default;
+  background: var(--background);
+}
+
 @media (max-width: 768px) {
   .comparison-container {
     grid-template-columns: 1fr;
@@ -772,9 +798,11 @@ input[type="checkbox"] {
   }
   #mobileNav { display: block; }
   #tabs { display: none; }
-  .tabcontent { padding: 1.25rem; }
+  .tabcontent { padding: 1.25rem; max-width: 100%; }
   .input-group { gap: 0.75rem; }
-  button, input[type="file"], input[type="number"], select { font-size: 0.95rem; }
+  button, input[type="file"], input[type="number"], select, textarea { font-size: 0.95rem; }
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.25rem; }
 }
 
 /* CSV Visualizer Styles */

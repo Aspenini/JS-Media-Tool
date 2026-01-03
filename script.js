@@ -1,20 +1,36 @@
 function openTab(tabId) {
-  // Hide all tabs with animation
-  document.querySelectorAll('.tabcontent').forEach(tab => {
-    if (tab.id !== tabId) {
-      tab.style.display = 'none';
+  try {
+    // Hide all tabs
+    const allTabs = document.querySelectorAll('.tabcontent');
+    allTabs.forEach(tab => {
+      if (tab.id !== tabId) {
+        tab.style.display = 'none';
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update tab buttons
+    const allButtons = document.querySelectorAll('.tab-button');
+    allButtons.forEach(btn => btn.classList.remove('active'));
+    
+    const targetButton = document.querySelector(`[onclick*="openTab('${tabId}')"]`);
+    if (targetButton) {
+      targetButton.classList.add('active');
     }
-  });
 
-  // Update tab buttons
-  document.querySelectorAll('.tab-button').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  document.querySelector(`[onclick="openTab('${tabId}')"]`).classList.add('active');
-
-  // Show selected tab with animation
-  const selectedTab = document.getElementById(tabId);
-  selectedTab.style.display = 'block';
+    // Show selected tab
+    const selectedTab = document.getElementById(tabId);
+    if (selectedTab) {
+      selectedTab.style.display = 'block';
+      selectedTab.classList.add('active');
+    } else {
+      console.error(`Tab with id "${tabId}" not found`);
+      showNotification('Tab not found', 'error');
+    }
+  } catch (error) {
+    console.error('Error switching tabs:', error);
+    showNotification('Error switching tabs', 'error');
+  }
 }
 
 // Mobile menu
@@ -3690,4 +3706,288 @@ function displayConversionResults(originalSize, convertedSize, convertedData) {
   download.style.display = 'inline-block';
   
   result.style.display = 'block';
+}
+
+// Brainfuck Encoder Functions
+function encodeToBrainfuck() {
+  try {
+    const inputElement = document.getElementById('brainfuckInput');
+    const outputElement = document.getElementById('brainfuckOutput');
+    
+    if (!inputElement || !outputElement) {
+      console.error('Brainfuck encoder elements not found');
+      return;
+    }
+    
+    const input = inputElement.value;
+    
+    if (!input) {
+      outputElement.value = '';
+      return;
+    }
+    
+    // Use requestAnimationFrame for better performance on large inputs
+    requestAnimationFrame(() => {
+      try {
+        const brainfuckCode = textToBrainfuck(input);
+        outputElement.value = brainfuckCode;
+      } catch (error) {
+        outputElement.value = 'Error encoding text: ' + error.message;
+        console.error('Brainfuck encoding error:', error);
+        showNotification('Encoding error occurred', 'error');
+      }
+    });
+  } catch (error) {
+    console.error('Brainfuck encoder error:', error);
+    showNotification('Encoder error', 'error');
+  }
+}
+
+function textToBrainfuck(text) {
+  if (!text) return '';
+  
+  let code = '';
+  let currentValue = 0;
+  
+  for (let i = 0; i < text.length; i++) {
+    const targetChar = text.charCodeAt(i);
+    const difference = targetChar - currentValue;
+    
+    if (difference === 0) {
+      code += '.';
+    } else {
+      // Use direct increment/decrement (simple and reliable)
+      const op = difference > 0 ? '+' : '-';
+      code += op.repeat(Math.abs(difference)) + '.';
+      currentValue = targetChar;
+    }
+  }
+  
+  return code;
+}
+
+function copyBrainfuckCode() {
+  const output = document.getElementById('brainfuckOutput');
+  if (!output.value) {
+    showNotification('No code to copy!', 'error');
+    return;
+  }
+  
+  output.select();
+  output.setSelectionRange(0, 99999); // For mobile devices
+  
+  try {
+    document.execCommand('copy');
+    showNotification('Brainfuck code copied to clipboard!', 'success');
+  } catch (err) {
+    // Fallback for modern browsers
+    navigator.clipboard.writeText(output.value).then(() => {
+      showNotification('Brainfuck code copied to clipboard!', 'success');
+    }).catch(() => {
+      showNotification('Failed to copy code. Please select and copy manually.', 'error');
+    });
+  }
+}
+
+function downloadBrainfuckCode() {
+  const output = document.getElementById('brainfuckOutput');
+  if (!output.value) {
+    showNotification('No code to download!', 'error');
+    return;
+  }
+  
+  const blob = new Blob([output.value], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'brainfuck_code.bf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showNotification('Brainfuck code downloaded!', 'success');
+}
+
+// PAGNAI Functions
+let pagnaiAudioContext = null;
+let pagnaiAudioBuffer = null;
+let pagnaiSourceNode = null;
+let pagnaiGainNode = null;
+
+// Initialize audio context on user interaction
+function initPAGNAIAudioContext() {
+  if (!pagnaiAudioContext) {
+    try {
+      pagnaiAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (error) {
+      showNotification('Audio context not supported in this browser.', 'error');
+      console.error('Audio context error:', error);
+      return false;
+    }
+  }
+  
+  // Resume context if suspended (required by some browsers)
+  if (pagnaiAudioContext.state === 'suspended') {
+    pagnaiAudioContext.resume();
+  }
+  
+  return true;
+}
+
+document.getElementById('pagnaiVolume').addEventListener('input', function(e) {
+  const value = Math.round(e.target.value * 100);
+  document.getElementById('pagnaiVolumeValue').textContent = value + '%';
+});
+
+document.getElementById('pagnaiModulation').addEventListener('change', function(e) {
+  const controls = document.getElementById('pagnaiModControls');
+  controls.style.display = e.target.checked ? 'block' : 'none';
+});
+
+function generatePAGNAI() {
+  if (!initPAGNAIAudioContext()) return;
+  
+  try {
+    const waveType = document.getElementById('pagnaiWaveType').value;
+    const frequency = parseFloat(document.getElementById('pagnaiFrequency').value);
+    const duration = parseFloat(document.getElementById('pagnaiDuration').value);
+    const volume = parseFloat(document.getElementById('pagnaiVolume').value);
+    const useModulation = document.getElementById('pagnaiModulation').checked;
+    
+    const sampleRate = pagnaiAudioContext.sampleRate;
+    const length = sampleRate * duration;
+    const buffer = pagnaiAudioContext.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    if (waveType === 'noise') {
+      // Generate white noise
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * volume;
+      }
+    } else {
+      // Generate periodic waveform
+      const twoPi = 2 * Math.PI;
+      let modPhase = 0;
+      
+      if (useModulation) {
+        const modFreq = parseFloat(document.getElementById('pagnaiModFreq').value);
+        const modDepth = parseFloat(document.getElementById('pagnaiModDepth').value);
+        
+        for (let i = 0; i < length; i++) {
+          const t = i / sampleRate;
+          const modValue = Math.sin(modPhase) * modDepth;
+          const currentFreq = frequency + modValue;
+          const phase = (currentFreq * twoPi * i) / sampleRate;
+          
+          let sample = 0;
+          switch (waveType) {
+            case 'sine':
+              sample = Math.sin(phase);
+              break;
+            case 'square':
+              sample = Math.sin(phase) >= 0 ? 1 : -1;
+              break;
+            case 'sawtooth':
+              sample = 2 * (phase % twoPi) / twoPi - 1;
+              break;
+            case 'triangle':
+              sample = 2 * Math.abs(2 * (phase % twoPi) / twoPi - 1) - 1;
+              break;
+          }
+          
+          data[i] = sample * volume;
+          modPhase += (modFreq * twoPi) / sampleRate;
+        }
+      } else {
+        for (let i = 0; i < length; i++) {
+          const phase = (frequency * twoPi * i) / sampleRate;
+          
+          let sample = 0;
+          switch (waveType) {
+            case 'sine':
+              sample = Math.sin(phase);
+              break;
+            case 'square':
+              sample = Math.sin(phase) >= 0 ? 1 : -1;
+              break;
+            case 'sawtooth':
+              sample = 2 * (phase % twoPi) / twoPi - 1;
+              break;
+            case 'triangle':
+              sample = 2 * Math.abs(2 * (phase % twoPi) / twoPi - 1) - 1;
+              break;
+          }
+          
+          data[i] = sample * volume;
+        }
+      }
+    }
+    
+    pagnaiAudioBuffer = buffer;
+    
+    // Create WAV blob for download
+    const wavBlob = audioBufferToWavBlob(buffer);
+    const url = URL.createObjectURL(wavBlob);
+    
+    const audioElement = document.getElementById('pagnaiAudio');
+    audioElement.src = url;
+    
+    const downloadLink = document.getElementById('pagnaiDownload');
+    downloadLink.href = url;
+    
+    document.getElementById('pagnaiPreview').style.display = 'block';
+    document.getElementById('pagnaiPlayBtn').disabled = false;
+    document.getElementById('pagnaiStopBtn').disabled = false;
+    
+    showNotification('Audio generated successfully!', 'success');
+  } catch (error) {
+    showNotification('Error generating audio: ' + error.message, 'error');
+    console.error('PAGNAI generation error:', error);
+  }
+}
+
+function playPAGNAI() {
+  if (!pagnaiAudioBuffer || !initPAGNAIAudioContext()) {
+    showNotification('Please generate audio first!', 'error');
+    return;
+  }
+  
+  try {
+    stopPAGNAI(); // Stop any currently playing audio
+    
+    pagnaiSourceNode = pagnaiAudioContext.createBufferSource();
+    pagnaiGainNode = pagnaiAudioContext.createGain();
+    
+    pagnaiSourceNode.buffer = pagnaiAudioBuffer;
+    pagnaiGainNode.gain.value = parseFloat(document.getElementById('pagnaiVolume').value);
+    
+    pagnaiSourceNode.connect(pagnaiGainNode);
+    pagnaiGainNode.connect(pagnaiAudioContext.destination);
+    
+    pagnaiSourceNode.onended = () => {
+      document.getElementById('pagnaiPlayBtn').disabled = false;
+      document.getElementById('pagnaiStopBtn').disabled = true;
+    };
+    
+    pagnaiSourceNode.start(0);
+    document.getElementById('pagnaiPlayBtn').disabled = true;
+    document.getElementById('pagnaiStopBtn').disabled = false;
+  } catch (error) {
+    showNotification('Error playing audio: ' + error.message, 'error');
+    console.error('PAGNAI playback error:', error);
+  }
+}
+
+function stopPAGNAI() {
+  if (pagnaiSourceNode) {
+    try {
+      pagnaiSourceNode.stop();
+    } catch (e) {
+      // Source may have already stopped
+    }
+    pagnaiSourceNode = null;
+    pagnaiGainNode = null;
+    document.getElementById('pagnaiPlayBtn').disabled = false;
+    document.getElementById('pagnaiStopBtn').disabled = true;
+  }
 }

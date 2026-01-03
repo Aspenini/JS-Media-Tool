@@ -61,6 +61,8 @@
         <button class="mobile-menu-item" onclick="selectMobileTab('paletteTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Color Palette</button>
         <button class="mobile-menu-item" onclick="selectMobileTab('csvTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">CSV to Image</button>
         <button class="mobile-menu-item" onclick="selectMobileTab('converterTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">File Converter</button>
+        <button class="mobile-menu-item" onclick="selectMobileTab('brainfuckTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Brainfuck Encoder</button>
+        <button class="mobile-menu-item" onclick="selectMobileTab('pagnaiTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">PAGNAI</button>
       </div>
     </div>
 
@@ -73,6 +75,8 @@
       
       <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
       <button class="tab-button" onclick="openTab('converterTab')">File Converter</button>
+      <button class="tab-button" onclick="openTab('brainfuckTab')">Brainfuck Encoder</button>
+      <button class="tab-button" onclick="openTab('pagnaiTab')">PAGNAI</button>
     </div>
 
   <div id="scalerTab" class="tabcontent active" style="display:block;">
@@ -453,6 +457,85 @@
         </div>
       </div>
       <a id="conversionDownload" class="download-link" style="display: none;">Download Converted File</a>
+    </div>
+  </div>
+
+  <div id="brainfuckTab" class="tabcontent">
+    <h2>Brainfuck Text Encoder</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Encode text into Brainfuck code that prints the given string.</p>
+    <div class="input-group" style="flex-direction: column; align-items: stretch;">
+      <label for="brainfuckInput" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Input Text:</label>
+      <textarea id="brainfuckInput" placeholder="Enter text to encode..." style="background: var(--surface); color: var(--text); padding: 0.75rem; border-radius: 12px; border: 2px solid var(--border); font-size: 1rem; font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 120px; resize: vertical; transition: all 0.3s ease;" oninput="encodeToBrainfuck()"></textarea>
+    </div>
+    <div class="input-group" style="flex-direction: column; align-items: stretch; margin-top: 1.5rem;">
+      <label for="brainfuckOutput" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Brainfuck Code:</label>
+      <textarea id="brainfuckOutput" readonly placeholder="Encoded Brainfuck code will appear here..." style="background: var(--background); color: var(--text); padding: 0.75rem; border-radius: 12px; border: 2px solid var(--border); font-size: 0.9rem; font-family: 'Courier New', monospace; min-height: 200px; resize: vertical; transition: all 0.3s ease;"></textarea>
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+        <button onclick="copyBrainfuckCode()" style="flex: 1;">Copy Code</button>
+        <button onclick="downloadBrainfuckCode()" style="flex: 1;">Download as .bf</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pagnaiTab" class="tabcontent">
+    <h2>PAGNAI: Procedural Audio Generation, Not Artificial Intelligence</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Generate procedural audio using mathematical algorithms and signal synthesis.</p>
+    
+    <div class="input-group" style="flex-direction: column; align-items: stretch; margin-bottom: 1.5rem;">
+      <label for="pagnaiWaveType" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Wave Type:</label>
+      <select id="pagnaiWaveType" style="width: 100%;">
+        <option value="sine">Sine Wave</option>
+        <option value="square">Square Wave</option>
+        <option value="sawtooth">Sawtooth Wave</option>
+        <option value="triangle">Triangle Wave</option>
+        <option value="noise">White Noise</option>
+      </select>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+      <div class="input-group" style="flex-direction: column;">
+        <label for="pagnaiFrequency" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Frequency (Hz):</label>
+        <input type="number" id="pagnaiFrequency" value="440" min="20" max="20000" step="1" style="width: 100%;">
+      </div>
+      <div class="input-group" style="flex-direction: column;">
+        <label for="pagnaiDuration" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Duration (seconds):</label>
+        <input type="number" id="pagnaiDuration" value="2" min="0.1" max="30" step="0.1" style="width: 100%;">
+      </div>
+      <div class="input-group" style="flex-direction: column;">
+        <label for="pagnaiVolume" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Volume:</label>
+        <input type="range" id="pagnaiVolume" value="0.5" min="0" max="1" step="0.01" style="width: 100%;">
+        <span id="pagnaiVolumeValue" style="color: var(--text-secondary); font-size: 0.9rem;">50%</span>
+      </div>
+    </div>
+
+    <div class="input-group" style="flex-direction: column; align-items: stretch; margin-bottom: 1.5rem;">
+      <div class="checkbox-group">
+        <input type="checkbox" id="pagnaiModulation">
+        <label for="pagnaiModulation">Enable Frequency Modulation</label>
+      </div>
+      <div id="pagnaiModControls" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+          <div class="input-group" style="flex-direction: column;">
+            <label for="pagnaiModFreq" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Mod. Frequency:</label>
+            <input type="number" id="pagnaiModFreq" value="5" min="0.1" max="100" step="0.1" style="width: 100%;">
+          </div>
+          <div class="input-group" style="flex-direction: column;">
+            <label for="pagnaiModDepth" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Mod. Depth:</label>
+            <input type="number" id="pagnaiModDepth" value="50" min="0" max="500" step="1" style="width: 100%;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-group" style="flex-wrap: wrap; gap: 0.5rem;">
+      <button onclick="generatePAGNAI()" style="flex: 1; min-width: 150px;">Generate Audio</button>
+      <button onclick="playPAGNAI()" id="pagnaiPlayBtn" disabled style="flex: 1; min-width: 150px;">Play</button>
+      <button onclick="stopPAGNAI()" id="pagnaiStopBtn" disabled style="flex: 1; min-width: 150px;">Stop</button>
+    </div>
+
+    <div id="pagnaiPreview" class="audio-preview" style="display: none; margin-top: 2rem;">
+      <audio id="pagnaiAudio" controls style="display: block; width: 100%; max-width: 500px;"></audio>
+      <a id="pagnaiDownload" class="download-link" download="pagnai_audio.wav" style="display: inline-block; margin-top: 1rem;">Download Generated Audio</a>
     </div>
   </div>
   </div>
