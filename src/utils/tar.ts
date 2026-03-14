@@ -75,5 +75,6 @@ export function createTarBlob(entries: TarEntry[]): Blob {
 
   blocks.push(new Uint8Array(512));
   blocks.push(new Uint8Array(512));
-  return new Blob(blocks, { type: 'application/x-tar' });
+  const arrayBuffers = blocks.map((b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
+  return new Blob(arrayBuffers, { type: 'application/x-tar' });
 }
