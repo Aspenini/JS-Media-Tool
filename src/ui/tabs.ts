@@ -2,12 +2,12 @@ import { showNotification } from './notification.js';
 
 const HASH_TO_TAB: Record<string, string> = {
   scaler: 'scalerTab',
-  slicer: 'slicerTab',
-  audio: 'audioTab',
-  palette: 'paletteTab',
-  csv: 'csvTab',
-  qrcode: 'qrcodeTab',
-  brainfuck: 'brainfuckTab',
+  'slicer-tool': 'slicerTab',
+  'audio-effects': 'audioTab',
+  'color-palette': 'paletteTab',
+  'csv-to-image': 'csvTab',
+  'qr-code': 'qrcodeTab',
+  'brainfuck-encoder': 'brainfuckTab',
   pagnai: 'pagnaiTab',
 };
 
