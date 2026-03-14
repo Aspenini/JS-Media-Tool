@@ -4,14 +4,15 @@ import { audioBufferToWavBlob } from '../utils/wav.js';
 
 let audioContext: AudioContext | null = null;
 
-function createSaturationCurve(amount: number): Float32Array {
+function createSaturationCurve(amount: number): Float32Array<ArrayBuffer> {
   const samples = 44100;
-  const curve = new Float32Array(samples);
+  const curveBuffer = new ArrayBuffer(samples * Float32Array.BYTES_PER_ELEMENT);
+  const curve = new Float32Array(curveBuffer);
   for (let i = 0; i < samples; i++) {
     const x = (i * 2) / samples - 1;
     curve[i] = Math.tanh(x * amount) / Math.tanh(amount);
   }
-  return curve;
+  return curve as Float32Array<ArrayBuffer>;
 }
 
 async function applyVintageRadioEffect(buffer: AudioBuffer): Promise<AudioBuffer> {

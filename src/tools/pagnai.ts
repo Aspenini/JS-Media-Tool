@@ -70,7 +70,6 @@ export function initPagnai(): void {
             const modFreq = parseFloat((document.getElementById('pagnaiModFreq') as HTMLInputElement)?.value || '5');
             const modDepth = parseFloat((document.getElementById('pagnaiModDepth') as HTMLInputElement)?.value || '50');
             for (let i = 0; i < length; i++) {
-              const t = i / sampleRate;
               const modValue = Math.sin(modPhase) * modDepth;
               const currentFreq = frequency + modValue;
               const phase = (currentFreq * twoPi * i) / sampleRate;

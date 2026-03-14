@@ -29,7 +29,6 @@ export function audioBufferToWavBlob(buffer: AudioBuffer, bitDepth = 16): Blob {
   view.setUint32(40, samples * blockAlign, true);
 
   let offset = 44;
-  const maxValue = Math.pow(2, bitDepth - 1) - 1;
 
   for (let i = 0; i < samples; i++) {
     for (let ch = 0; ch < numChannels; ch++) {
