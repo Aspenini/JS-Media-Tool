@@ -22,7 +22,7 @@ function parseCSVLine(line: string): string[] {
 
 export function initCsv(): void {
   const csvInput = document.getElementById('csvInput') as HTMLInputElement;
-  const generateBtn = document.getElementById('generateBtn');
+  const generateBtn = document.getElementById('generateBtn') as HTMLButtonElement | null;
 
   if (csvInput && generateBtn) {
     csvInput.addEventListener('change', () => {
