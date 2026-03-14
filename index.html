@@ -5,551 +5,357 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- Primary Meta Tags -->
-  <title>JS Media Tool</title>
-  <meta name="title" content="JS Media Tool">
-  <meta name="description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, and vintage audio effects. Perfect for pixel art, game sprites, audio manipulation, and more.">
-  <meta name="keywords" content="media tool, image tool, audio tool, pixel art, image scaling, image slicer, pixel perfect, browser tool, audio effects, image manipulation, audio processing">
+  <title>Aspenini Media Tool</title>
+  <meta name="title" content="Aspenini Media Tool">
+  <meta name="description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, vintage audio effects, QR code generation, and more. Perfect for pixel art, game sprites, audio manipulation, and more.">
+  <meta name="keywords" content="media tool, image tool, audio tool, pixel art, image scaling, image slicer, pixel perfect, browser tool, audio effects, qr code, image manipulation, audio processing">
   <meta name="author" content="Aspenini">
   <meta name="robots" content="index, follow">
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://js-media-tool.com/">
-  <meta property="og:title" content="JS Media Tool">
-  <meta property="og:description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, and vintage audio effects. Perfect for pixel art, game sprites, audio manipulation, and more.">
-  <meta property="og:image" content="https://js-media-tool.com/preview.png">
+  <meta property="og:url" content="https://js-media-tool.aspenini.com/">
+  <meta property="og:title" content="Aspenini Media Tool">
+  <meta property="og:description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, vintage audio effects, QR code generation, and more.">
+  <meta property="og:image" content="https://js-media-tool.aspenini.com/preview.png">
   
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://js-media-tool.com/">
-  <meta property="twitter:title" content="JS Media Tool">
-  <meta property="twitter:description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, and vintage audio effects. Perfect for pixel art, game sprites, audio manipulation, and more.">
-  <meta property="twitter:image" content="https://js-media-tool.com/preview.png">
+  <meta property="twitter:url" content="https://js-media-tool.aspenini.com/">
+  <meta property="twitter:title" content="Aspenini Media Tool">
+  <meta property="twitter:description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, vintage audio effects, QR code generation, and more.">
+  <meta property="twitter:image" content="https://js-media-tool.aspenini.com/preview.png">
   
   <!-- Discord -->
-  <meta name="theme-color" content="#6366f1">
+  <meta name="theme-color" content="#0c1222">
   <meta name="discord:card" content="summary_large_image">
-  <meta name="discord:title" content="JS Media Tool">
-  <meta name="discord:description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, and vintage audio effects. Perfect for pixel art, game sprites, audio manipulation, and more.">
-  <meta name="discord:image" content="https://js-media-tool.com/preview.png">
+  <meta name="discord:title" content="Aspenini Media Tool">
+  <meta name="discord:description" content="A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, vintage audio effects, QR code generation, and more.">
+  <meta name="discord:image" content="https://js-media-tool.aspenini.com/preview.png">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="apple-touch-icon" href="img/favicon.png">
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="apple-touch-icon" href="/img/favicon.png">
   
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
+  <!-- Styles (loaded via main.ts) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="main-content">
-    <h1 class="fade-in">JS Media Tool</h1>
+    <h1>Aspenini Media Tool</h1>
     
-    <div id="mobileNav" style="width:100%;">
-      <div id="hamburger" aria-label="Open menu" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; border:2px solid var(--border); background: var(--surface); color: var(--text); border-radius: 12px; padding: 0.75rem 1rem;">
-        <span style="font-size:1.25rem;">☰</span>
-        <span style="font-weight:600;">Menu</span>
+    <div id="mobileNav">
+      <div id="hamburger" aria-label="Open menu">
+        <span aria-hidden="true">☰</span>
+        <span>Menu</span>
       </div>
-      <div id="mobileMenu" style="display:none; margin-top:0.5rem; border:2px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden;">
-        <button class="mobile-menu-item" onclick="selectMobileTab('scalerTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Scaler</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('slicerTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Slicer Tool</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('audioTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Audio Effects</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('videoTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Images to Video</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('paletteTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Color Palette</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('csvTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">CSV to Image</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('converterTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">File Converter</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('brainfuckTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">Brainfuck Encoder</button>
-        <button class="mobile-menu-item" onclick="selectMobileTab('pagnaiTab')" style="width:100%; text-align:left; padding:0.75rem 1rem; border:0; background:transparent; color:var(--text);">PAGNAI</button>
+      <div id="mobileMenu" style="display:none;">
+        <button class="mobile-menu-item tab-button" data-tab="scalerTab">Scaler</button>
+        <button class="mobile-menu-item tab-button" data-tab="slicerTab">Slicer Tool</button>
+        <button class="mobile-menu-item tab-button" data-tab="audioTab">Audio Effects</button>
+        <button class="mobile-menu-item tab-button" data-tab="paletteTab">Color Palette</button>
+        <button class="mobile-menu-item tab-button" data-tab="csvTab">CSV to Image</button>
+        <button class="mobile-menu-item tab-button" data-tab="qrcodeTab">QR Code</button>
+        <button class="mobile-menu-item tab-button" data-tab="brainfuckTab">Brainfuck Encoder</button>
+        <button class="mobile-menu-item tab-button" data-tab="pagnaiTab">PAGNAI</button>
       </div>
     </div>
 
-    <div id="tabs" class="fade-in">
-      <button class="tab-button active" onclick="openTab('scalerTab')">Scaler</button>
-      <button class="tab-button" onclick="openTab('slicerTab')">Slicer Tool</button>
-      <button class="tab-button" onclick="openTab('audioTab')">Audio Effects</button>
-      <button class="tab-button" onclick="openTab('videoTab')">Images to Video</button>
-      <button class="tab-button" onclick="openTab('paletteTab')">Color Palette</button>
-      
-      <button class="tab-button" onclick="openTab('csvTab')">CSV to Image</button>
-      <button class="tab-button" onclick="openTab('converterTab')">File Converter</button>
-      <button class="tab-button" onclick="openTab('brainfuckTab')">Brainfuck Encoder</button>
-      <button class="tab-button" onclick="openTab('pagnaiTab')">PAGNAI</button>
+    <div id="tabs">
+      <button class="tab-button active" data-tab="scalerTab">Scaler</button>
+      <button class="tab-button" data-tab="slicerTab">Slicer Tool</button>
+      <button class="tab-button" data-tab="audioTab">Audio Effects</button>
+      <button class="tab-button" data-tab="paletteTab">Color Palette</button>
+      <button class="tab-button" data-tab="csvTab">CSV to Image</button>
+      <button class="tab-button" data-tab="qrcodeTab">QR Code</button>
+      <button class="tab-button" data-tab="brainfuckTab">Brainfuck Encoder</button>
+      <button class="tab-button" data-tab="pagnaiTab">PAGNAI</button>
     </div>
 
-  <div id="scalerTab" class="tabcontent active" style="display:block;">
-    <h2>Scaler Tool</h2>
-    <div class="input-group">
-      <input type="file" id="scaleInput" accept="image/*">
-      <input type="number" id="scaleFactor" placeholder="Scale Factor (e.g. 2)" step="any">
-      <button onclick="scaleImage()">Scale Image</button>
-    </div>
-    <canvas id="scaleCanvas"></canvas>
-    <a id="scaleDownload" class="download-link" download="scaled.png" style="display: none;">Download Scaled Image</a>
-  </div>
-
-
-  <div id="slicerTab" class="tabcontent">
-    <h2>Diagonal Image Slicer</h2>
-    <div class="input-group">
-      <input type="file" id="img1" accept="image/*">
-      <input type="file" id="img2" accept="image/*">
-    </div>
-    <div class="input-group">
-      <select id="direction">
-        <option value="left">↙️ Diagonal (Top-left to Bottom-right)</option>
-        <option value="right">↘️ Diagonal (Top-right to Bottom-left)</option>
-      </select>
-      <div class="checkbox-group">
-        <input type="checkbox" id="allDirections">
-        <label for="allDirections">Generate all diagonal variants</label>
+    <div id="scalerTab" class="tabcontent active" style="display:block;">
+      <h2>Scaler Tool</h2>
+      <p>Pixel-perfect image scaling. Uses nearest-neighbor interpolation to scale images by integer factors without blurring—ideal for pixel art and sprites.</p>
+      <div class="input-group">
+        <input type="file" id="scaleInput" accept="image/*">
+        <input type="number" id="scaleFactor" placeholder="Scale Factor (e.g. 2)" step="any">
+        <button data-scaler-scale>Scale Image</button>
       </div>
-      <button id="generate">Generate</button>
+      <canvas id="scaleCanvas"></canvas>
+      <a id="scaleDownload" class="download-link" download="scaled.png" style="display: none;">Download Scaled Image</a>
     </div>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <div id="outputList"></div>
-  </div>
 
-  <div id="audioTab" class="tabcontent">
-    <h2>Audio Effects</h2>
-    <div class="input-group">
-      <input type="file" id="audioInput" accept="audio/*" multiple>
-      <select id="audioEffect">
-        <option value="vintageRadio">Vintage Radio (1940s-1950s)</option>
-        <option value="bitcrusher8">8-bit (Bitcrusher)</option>
-        <option value="bitcrusher16">16-bit (Bitcrusher)</option>
-      </select>
-      <button onclick="processAudioBulk()">Generate Effect</button>
-    </div>
-    <div id="audioPreview" class="audio-preview">
-      <audio id="processedAudio" controls style="display: none;"></audio>
-      <a id="audioDownload" class="download-link" download="processed_audio.wav" style="display: none;">Download Processed Audio</a>
-      <div id="audioProgress" style="width: 100%; display: none; gap: 0.5rem;">
-        <div style="display:flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem;">
-          <span id="audioProgressLabel">Processing...</span>
-          <span id="audioProgressPct">0%</span>
+    <div id="slicerTab" class="tabcontent">
+      <h2>Diagonal Image Slicer</h2>
+      <div class="input-group">
+        <input type="file" id="img1" accept="image/*">
+        <input type="file" id="img2" accept="image/*">
+      </div>
+      <div class="input-group">
+        <select id="direction">
+          <option value="left">↙️ Diagonal (Top-left to Bottom-right)</option>
+          <option value="right">↘️ Diagonal (Top-right to Bottom-left)</option>
+        </select>
+        <div class="checkbox-group">
+          <input type="checkbox" id="allDirections">
+          <label for="allDirections">Generate all diagonal variants</label>
         </div>
-        <div style="width: 100%; height: 10px; background: var(--background); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
-          <div id="audioProgressBar" style="height: 100%; width: 0%; background: var(--primary);"></div>
+        <button id="generate">Generate</button>
+      </div>
+      <canvas id="canvas" style="display:none;"></canvas>
+      <div id="outputList"></div>
+    </div>
+
+    <div id="audioTab" class="tabcontent">
+      <h2>Audio Effects</h2>
+      <div class="input-group">
+        <input type="file" id="audioInput" accept="audio/*" multiple>
+        <select id="audioEffect">
+          <option value="vintageRadio">Vintage Radio (1940s-1950s)</option>
+          <option value="bitcrusher8">8-bit (Bitcrusher)</option>
+          <option value="bitcrusher16">16-bit (Bitcrusher)</option>
+        </select>
+        <button data-audio-process>Generate Effect</button>
+      </div>
+      <div id="audioPreview" class="audio-preview">
+        <div id="audioProgress" class="progress-container" style="display: none;">
+          <div class="progress-header">
+            <span id="audioProgressLabel">Processing...</span>
+            <span id="audioProgressPct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="audioProgressBar" class="progress-bar"></div>
+          </div>
+        </div>
+        <a id="audioZipDownload" class="download-link" style="display: none;">Download All (TAR)</a>
+      </div>
+    </div>
+
+    <div id="paletteTab" class="tabcontent">
+      <h2>Color Palette Converter</h2>
+      <div class="palette-upload-section">
+        <div class="upload-controls">
+          <input type="file" id="paletteInput" accept="image/*">
+          <button class="clear-btn" data-palette-clear title="Clear Image"><span>🗑️</span></button>
+        </div>
+        <div class="file-info">Upload an image to apply retro color palettes</div>
+      </div>
+      <div id="paletteSettings" class="palette-settings" style="display: none;">
+        <h3>Palette Settings</h3>
+        <div class="palette-selection">
+          <div class="input-group">
+            <label for="paletteType">Color Palette:</label>
+            <select id="paletteType">
+              <option value="8bit">8-bit (256 colors) - Classic PC gaming</option>
+              <option value="16bit">16-bit (16 colors) - PICO-8 style</option>
+              <option value="nes">NES (54 colors) - Nintendo Entertainment System</option>
+              <option value="gameboy">Game Boy (4 colors) - Classic monochrome</option>
+              <option value="cga">CGA (4 colors) - Early PC graphics</option>
+              <option value="ega">EGA (16 colors) - Enhanced Graphics Adapter</option>
+              <option value="vga">VGA (256 colors) - Video Graphics Array</option>
+              <option value="dawnbringer16">DawnBringer 16 - Popular pixel art palette</option>
+              <option value="pico8">PICO-8 (16 colors) - Fantasy console palette</option>
+              <option value="aap64">AAP-64 - 64-color palette</option>
+              <option value="arnes16">Arne's 16 - 16-color pixel art palette</option>
+            </select>
+          </div>
+          <div class="palette-preview">
+            <h4>Selected Palette:</h4>
+            <div id="paletteColors" class="palette-colors"></div>
+          </div>
+        </div>
+        <div class="palette-options">
+          <div class="input-group">
+            <label for="dithering">Dithering:</label>
+            <select id="dithering">
+              <option value="none">None</option>
+              <option value="floyd-steinberg">Floyd-Steinberg</option>
+              <option value="ordered">Ordered (Bayer)</option>
+              <option value="atkinson">Atkinson</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="colorMatching">Color Matching:</label>
+            <select id="colorMatching">
+              <option value="euclidean">Euclidean Distance</option>
+              <option value="perceptual">Perceptual (CIE2000)</option>
+              <option value="manhattan">Manhattan Distance</option>
+            </select>
+          </div>
         </div>
       </div>
-      <a id="audioZipDownload" class="download-link" style="display: none;">Download All (TAR)</a>
-    </div>
-  </div>
-
-  <div id="videoTab" class="tabcontent">
-    <h2>Image to Video</h2>
-    <div class="input-group">
-      <input type="file" id="videoImages" accept="image/*" multiple>
-      <select id="videoFormat">
-        <option value="mp4">MP4</option>
-        <option value="webm">WebM</option>
-      </select>
-      <button onclick="loadVideoImages()">Load Images</button>
-    </div>
-    
-    <div id="imageList" class="image-list" style="display: none;">
-      <h3>Image Order (Drag to reorder)</h3>
-      <div id="imageItems" class="image-items"></div>
-      <button onclick="createVideo()" class="generate-btn">Generate Video</button>
-    </div>
-    
-    <div id="videoPreview" class="video-preview" style="display: none;">
-      <video id="generatedVideo" controls style="display: none;"></video>
-      <a id="videoDownload" class="download-link" download="generated_video.mp4" style="display: none;">Download Video</a>
-    </div>
-  </div>
-
-
-  <div id="paletteTab" class="tabcontent">
-    <h2>Color Palette Converter</h2>
-    
-    <!-- File Upload Section -->
-    <div class="palette-upload-section">
-      <div class="upload-controls">
-        <input type="file" id="paletteInput" accept="image/*" onchange="loadPaletteImage(this.files)">
-        <button class="clear-btn" onclick="clearPaletteImage()" title="Clear Image">
-          <span>🗑️</span>
-        </button>
+      <div id="paletteComparison" class="palette-comparison" style="display: none;">
+        <h3>Before & After</h3>
+        <div class="comparison-container">
+          <div class="image-container">
+            <h4>Original</h4>
+            <canvas id="originalCanvas"></canvas>
+          </div>
+          <div class="image-container">
+            <h4>Palette Applied</h4>
+            <canvas id="paletteCanvas"></canvas>
+          </div>
+        </div>
+        <a id="paletteDownload" class="download-link" download="palette_image.png" style="display: none;">Download Converted Image</a>
       </div>
-      <div class="file-info">Upload an image to apply retro color palettes</div>
     </div>
 
-    <!-- Palette Selection -->
-    <div id="paletteSettings" class="palette-settings" style="display: none;">
-      <h3>Palette Settings</h3>
-      
-      <div class="palette-selection">
-        <div class="input-group">
-          <label for="paletteType">Color Palette:</label>
-          <select id="paletteType" onchange="updatePalettePreview()">
-            <option value="8bit">8-bit (256 colors) - Classic PC gaming</option>
-            <option value="16bit">16-bit (16 colors) - PICO-8 style</option>
-            <option value="nes">NES (54 colors) - Nintendo Entertainment System</option>
-            <option value="gameboy">Game Boy (4 colors) - Classic monochrome</option>
-            <option value="cga">CGA (4 colors) - Early PC graphics</option>
-            <option value="ega">EGA (16 colors) - Enhanced Graphics Adapter</option>
-            <option value="vga">VGA (256 colors) - Video Graphics Array</option>
-            <option value="dawnbringer16">DawnBringer 16 - Popular pixel art palette</option>
-            <option value="pico8">PICO-8 (16 colors) - Fantasy console palette</option>
-            <option value="aap64">AAP-64 - 64-color palette</option>
-            <option value="arnes16">Arne's 16 - 16-color pixel art palette</option>
+    <div id="csvTab" class="tabcontent">
+      <h2>CSV to Image</h2>
+      <div class="input-group">
+        <input type="file" id="csvInput" accept=".csv" multiple>
+        <button id="generateBtn" disabled>Generate</button>
+      </div>
+      <div id="imageResult" class="image-result" style="display:none">
+        <img id="tableImage" style="max-width: 100%; border-radius: 12px; border: 2px solid var(--border); background: white;">
+        <br>
+        <a id="downloadTableImage" class="download-link" download="csv_table_full.png" style="margin-top: 1rem;">Download Table as Image</a>
+      </div>
+      <div id="csvProgress" class="progress-container" style="display:none;margin-top:1rem">
+        <div class="progress-header">
+          <span id="csvProgressLabel">Processing...</span>
+          <span id="csvProgressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="csvProgressBar" class="progress-bar"></div>
+        </div>
+      </div>
+      <a id="csvZipDownload" class="download-link" style="display: none; margin-top: 1rem;">Download All (TAR)</a>
+    </div>
+
+    <div id="qrcodeTab" class="tabcontent">
+      <h2>QR Code Generator</h2>
+      <p>Generate customizable QR codes. Enter text or a URL to encode.</p>
+      <div class="input-group input-group-stack">
+        <label for="qrcodeContent">Content to encode:</label>
+        <textarea id="qrcodeContent" placeholder="Enter text or URL..."></textarea>
+      </div>
+      <div class="qrcode-options">
+        <div class="input-group input-group-stack">
+          <label for="qrcodeEcl">Error Correction (ECL):</label>
+          <select id="qrcodeEcl">
+            <option value="L">L - Low (~7%)</option>
+            <option value="M" selected>M - Medium (~15%)</option>
+            <option value="Q">Q - Quartile (~25%)</option>
+            <option value="H">H - High (~30%)</option>
           </select>
         </div>
-        
-        <div class="palette-preview">
-          <h4>Selected Palette:</h4>
-          <div id="paletteColors" class="palette-colors"></div>
+        <div class="input-group input-group-stack">
+          <label for="qrcodeSize">Size (px):</label>
+          <input type="number" id="qrcodeSize" value="256" min="64" max="1024" step="32">
         </div>
-      </div>
-
-      <div class="palette-options">
-        <div class="input-group">
-          <label for="dithering">Dithering:</label>
-          <select id="dithering" onchange="updatePalettePreview()">
-            <option value="none">None</option>
-            <option value="floyd-steinberg">Floyd-Steinberg</option>
-            <option value="ordered">Ordered (Bayer)</option>
-            <option value="atkinson">Atkinson</option>
+        <div class="input-group input-group-stack">
+          <label for="qrcodeMargin">Margin:</label>
+          <input type="number" id="qrcodeMargin" value="2" min="0" max="10">
+        </div>
+        <div class="input-group input-group-stack">
+          <label for="qrcodeFormat">Output format:</label>
+          <select id="qrcodeFormat">
+            <option value="png">PNG</option>
+            <option value="svg">SVG</option>
           </select>
         </div>
-        
-        <div class="input-group">
-          <label for="colorMatching">Color Matching:</label>
-          <select id="colorMatching" onchange="updatePalettePreview()">
-            <option value="euclidean">Euclidean Distance</option>
-            <option value="perceptual">Perceptual (CIE2000)</option>
-            <option value="manhattan">Manhattan Distance</option>
-          </select>
+        <div class="input-group input-group-stack">
+          <label for="qrcodeDark">Foreground color:</label>
+          <input type="color" id="qrcodeDark" value="#000000">
+        </div>
+        <div class="input-group input-group-stack">
+          <label for="qrcodeLight">Background color:</label>
+          <input type="color" id="qrcodeLight" value="#ffffff">
+        </div>
+      </div>
+      <div class="input-group">
+        <button data-qrcode-generate>Generate QR Code</button>
+      </div>
+      <div id="qrcodePreview" class="qrcode-preview" style="display:none"></div>
+      <a id="qrcodeDownload" class="download-link" style="display: none; margin-top: 1rem;">Download QR Code</a>
+    </div>
+
+    <div id="brainfuckTab" class="tabcontent">
+      <h2>Brainfuck Text Encoder</h2>
+      <p>Encode text into Brainfuck code that prints the given string.</p>
+      <div class="input-group input-group-stack">
+        <label for="brainfuckInput">Input Text:</label>
+        <textarea id="brainfuckInput" placeholder="Enter text to encode..." class="min-h-120"></textarea>
+      </div>
+      <div class="input-group input-group-stack">
+        <label for="brainfuckOutput">Brainfuck Code:</label>
+        <textarea id="brainfuckOutput" readonly placeholder="Encoded Brainfuck code will appear here..." class="font-mono min-h-200"></textarea>
+        <div class="button-row">
+          <button data-brainfuck-copy>Copy Code</button>
+          <button data-brainfuck-download>Download as .bf</button>
         </div>
       </div>
     </div>
 
-    <!-- Image Comparison -->
-    <div id="paletteComparison" class="palette-comparison" style="display: none;">
-      <h3>Before & After</h3>
-      <div class="comparison-container">
-        <div class="image-container">
-          <h4>Original</h4>
-          <canvas id="originalCanvas"></canvas>
-        </div>
-        <div class="image-container">
-          <h4>Palette Applied</h4>
-          <canvas id="paletteCanvas"></canvas>
-        </div>
+    <div id="pagnaiTab" class="tabcontent">
+      <h2>PAGNAI: Procedural Audio Generation, Not Artificial Intelligence</h2>
+      <p>Generate procedural audio using mathematical algorithms and signal synthesis.</p>
+      <div class="input-group input-group-stack">
+        <label for="pagnaiWaveType">Wave Type:</label>
+        <select id="pagnaiWaveType">
+          <option value="sine">Sine Wave</option>
+          <option value="square">Square Wave</option>
+          <option value="sawtooth">Sawtooth Wave</option>
+          <option value="triangle">Triangle Wave</option>
+          <option value="noise">White Noise</option>
+        </select>
       </div>
-      <a id="paletteDownload" class="download-link" download="palette_image.png" style="display: none;">Download Converted Image</a>
-    </div>
-  </div>
-
-  
-
-  <div id="csvTab" class="tabcontent">
-    <h2>CSV to Image</h2>
-    <div class="input-group">
-      <input type="file" id="csvInput" accept=".csv" multiple>
-      <button id="generateBtn" onclick="generateTableImageBulk()" disabled>Generate</button>
-    </div>
-    <div id="imageResult" class="image-result" style="display: none; text-align: center; margin-top: 2rem;">
-      <img id="tableImage" style="max-width: 100%; border-radius: 12px; border: 2px solid var(--border); background: white;" />
-      <br />
-      <a id="downloadTableImage" class="download-link" download="csv_table_full.png" style="margin-top: 1rem;">Download Table as Image</a>
-    </div>
-    <div id="csvProgress" style="width: 100%; display: none; gap: 0.5rem; margin-top: 1rem;">
-      <div style="display:flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem;">
-        <span id="csvProgressLabel">Processing...</span>
-        <span id="csvProgressPct">0%</span>
-      </div>
-      <div style="width: 100%; height: 10px; background: var(--background); border: 1px solid var(--border); border-radius: 999px; overflow: hidden;">
-        <div id="csvProgressBar" style="height: 100%; width: 0%; background: var(--primary);"></div>
-      </div>
-    </div>
-    <a id="csvZipDownload" class="download-link" style="display: none; margin-top: 1rem;">Download All (TAR)</a>
-  </div>
-
-  <div id="converterTab" class="tabcontent">
-    <h2>File Converter</h2>
-    
-    <!-- File Upload Section -->
-    <div class="converter-upload-section">
-      <div class="upload-controls">
-        <input type="file" id="converterInput" accept="image/*,.ico" onchange="detectConversionOptions()">
-        <button class="clear-btn" onclick="clearConverterFile()" title="Clear File">
-          <span>🗑️</span>
-        </button>
-      </div>
-      <div class="file-info">Upload an image or ICO file to convert to different formats</div>
-    </div>
-
-    <!-- File Info Display -->
-    <div id="converterFileInfo" class="file-info-display" style="display: none;">
-      <h3>File Information</h3>
-      <div id="converterFileDetails" class="file-details"></div>
-    </div>
-
-    <!-- Conversion Options -->
-    <div id="conversionOptions" class="conversion-options" style="display: none;">
-      <h3>Convert To:</h3>
-      
-      <!-- Image Format Grid -->
-      <div class="format-grid">
-        <div class="format-category">
-          <h4>Common Formats</h4>
-          <div class="format-buttons">
-            <button class="format-btn" data-format="png" onclick="selectConversionFormat('png')">
-              <span class="format-icon">🖼️</span>
-              <span class="format-name">PNG</span>
-              <span class="format-desc">Lossless, transparent</span>
-            </button>
-            <button class="format-btn" data-format="jpg" onclick="selectConversionFormat('jpg')">
-              <span class="format-icon">📷</span>
-              <span class="format-name">JPG</span>
-              <span class="format-desc">Compressed, small size</span>
-            </button>
-            <button class="format-btn" data-format="webp" onclick="selectConversionFormat('webp')">
-              <span class="format-icon">🌐</span>
-              <span class="format-name">WebP</span>
-              <span class="format-desc">Modern, efficient</span>
-            </button>
-
-          </div>
+      <div class="pagnai-controls">
+        <div class="input-group input-group-stack">
+          <label for="pagnaiFrequency">Frequency (Hz):</label>
+          <input type="number" id="pagnaiFrequency" value="440" min="20" max="20000" step="1">
         </div>
-
-        <div class="format-category">
-          <h4>Icon Formats</h4>
-          <div class="format-buttons">
-            <button class="format-btn" data-format="ico" onclick="selectConversionFormat('ico')">
-              <span class="format-icon">🔗</span>
-              <span class="format-name">ICO</span>
-              <span class="format-desc">Windows icons</span>
-            </button>
-
-            <button class="format-btn" data-format="svg" onclick="selectConversionFormat('svg')">
-              <span class="format-icon">📐</span>
-              <span class="format-name">SVG</span>
-              <span class="format-desc">Vector graphics</span>
-            </button>
-          </div>
+        <div class="input-group input-group-stack">
+          <label for="pagnaiDuration">Duration (seconds):</label>
+          <input type="number" id="pagnaiDuration" value="2" min="0.1" max="30" step="0.1">
         </div>
-
-        <div class="format-category">
-          <h4>Professional Formats</h4>
-          <div class="format-buttons">
-
-            <button class="format-btn" data-format="bmp" onclick="selectConversionFormat('bmp')">
-              <span class="format-icon">💾</span>
-              <span class="format-name">BMP</span>
-              <span class="format-desc">Uncompressed bitmap</span>
-            </button>
-
-          </div>
+        <div class="input-group input-group-stack">
+          <label for="pagnaiVolume">Volume:</label>
+          <input type="range" id="pagnaiVolume" value="0.5" min="0" max="1" step="0.01">
+          <span id="pagnaiVolumeValue" class="value-display">50%</span>
         </div>
       </div>
-
-      <!-- Format-specific settings -->
-      <div id="formatSettings" class="format-settings" style="display: none;">
-        <h4>Conversion Settings</h4>
-        <div class="settings-grid">
-          <div class="input-group">
-            <label for="conversionQuality">Quality:</label>
-            <input type="range" id="conversionQuality" min="1" max="100" value="90">
-            <span id="qualityValue">90%</span>
-          </div>
-          
-          <div class="input-group">
-            <label for="conversionWidth">Width:</label>
-            <input type="number" id="conversionWidth" placeholder="Auto">
-            <span class="unit-display">px</span>
-          </div>
-          
-          <div class="input-group">
-            <label for="conversionHeight">Height:</label>
-            <input type="number" id="conversionHeight" placeholder="Auto">
-            <span class="unit-display">px</span>
-          </div>
-          
-          <div class="checkbox-group">
-            <input type="checkbox" id="maintainAspectRatio" checked>
-            <label for="maintainAspectRatio">Maintain Aspect Ratio</label>
-          </div>
+      <div class="input-group input-group-stack">
+        <div class="checkbox-group">
+          <input type="checkbox" id="pagnaiModulation">
+          <label for="pagnaiModulation">Enable Frequency Modulation</label>
         </div>
-      </div>
-
-      <!-- ICO-specific settings -->
-      <div id="icoSizeSettings" class="format-settings" style="display: none;">
-        <h4>Icon Sizes</h4>
-        <p class="format-description">Select the icon sizes to include in your ICO file. Multiple sizes are recommended for better compatibility.</p>
-        
-        <div class="ico-size-grid">
-          <div class="ico-size-category">
-            <h5>Standard Sizes</h5>
-            <div class="ico-size-options">
-              <div class="checkbox-group">
-                <input type="checkbox" id="ico16" name="icoSize" value="16">
-                <label for="ico16">16×16 px</label>
-              </div>
-              <div class="checkbox-group">
-                <input type="checkbox" id="ico32" name="icoSize" value="32">
-                <label for="ico32">32×32 px</label>
-              </div>
-              <div class="checkbox-group">
-                <input type="checkbox" id="ico48" name="icoSize" value="48">
-                <label for="ico48">48×48 px</label>
-              </div>
-              <div class="checkbox-group">
-                <input type="checkbox" id="ico64" name="icoSize" value="64">
-                <label for="ico64">64×64 px</label>
-              </div>
+        <div id="pagnaiModControls" class="mod-controls" style="display:none">
+          <div class="mod-controls-grid">
+            <div class="input-group input-group-stack">
+              <label for="pagnaiModFreq">Mod. Frequency:</label>
+              <input type="number" id="pagnaiModFreq" value="5" min="0.1" max="100" step="0.1">
             </div>
-          </div>
-          
-          <div class="ico-size-category">
-            <h5>High DPI Sizes</h5>
-            <div class="ico-size-options">
-              <div class="checkbox-group">
-                <input type="checkbox" id="ico128" name="icoSize" value="128">
-                <label for="ico128">128×128 px</label>
-              </div>
-              <div class="checkbox-group">
-                <input type="checkbox" id="ico256" name="icoSize" value="256">
-                <label for="ico256">256×256 px</label>
-              </div>
+            <div class="input-group input-group-stack">
+              <label for="pagnaiModDepth">Mod. Depth:</label>
+              <input type="number" id="pagnaiModDepth" value="50" min="0" max="500" step="1">
             </div>
           </div>
         </div>
-        
-        <div class="ico-options">
-          <div class="checkbox-group">
-            <input type="checkbox" id="icoTransparent" checked>
-            <label for="icoTransparent">Include transparency</label>
-          </div>
-          <div class="checkbox-group">
-            <input type="checkbox" id="icoOptimize" checked>
-            <label for="icoOptimize">Optimize file size</label>
-          </div>
-        </div>
       </div>
-
-      <!-- Convert Button -->
-      <button id="convertButton" class="convert-btn" onclick="performConversion()" style="display: none;">Convert File</button>
-    </div>
-
-    <!-- Results Section -->
-    <div id="conversionResult" class="conversion-result" style="display: none;">
-      <h3>Conversion Complete</h3>
-      <div class="result-preview">
-        <img id="convertedPreview" alt="Converted Image">
+      <div class="button-row">
+        <button data-pagnai-generate>Generate Audio</button>
+        <button id="pagnaiPlayBtn" disabled>Play</button>
+        <button id="pagnaiStopBtn" disabled>Stop</button>
       </div>
-      <div class="result-info">
-        <div class="result-details">
-          <span class="result-label">Original:</span>
-          <span id="originalInfo"></span>
-        </div>
-        <div class="result-details">
-          <span class="result-label">Converted:</span>
-          <span id="convertedInfo"></span>
-        </div>
-        <div class="result-details">
-          <span class="result-label">Size Reduction:</span>
-          <span id="sizeReduction"></span>
-        </div>
-      </div>
-      <a id="conversionDownload" class="download-link" style="display: none;">Download Converted File</a>
-    </div>
-  </div>
-
-  <div id="brainfuckTab" class="tabcontent">
-    <h2>Brainfuck Text Encoder</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Encode text into Brainfuck code that prints the given string.</p>
-    <div class="input-group" style="flex-direction: column; align-items: stretch;">
-      <label for="brainfuckInput" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Input Text:</label>
-      <textarea id="brainfuckInput" placeholder="Enter text to encode..." style="background: var(--surface); color: var(--text); padding: 0.75rem; border-radius: 12px; border: 2px solid var(--border); font-size: 1rem; font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 120px; resize: vertical; transition: all 0.3s ease;" oninput="encodeToBrainfuck()"></textarea>
-    </div>
-    <div class="input-group" style="flex-direction: column; align-items: stretch; margin-top: 1.5rem;">
-      <label for="brainfuckOutput" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Brainfuck Code:</label>
-      <textarea id="brainfuckOutput" readonly placeholder="Encoded Brainfuck code will appear here..." style="background: var(--background); color: var(--text); padding: 0.75rem; border-radius: 12px; border: 2px solid var(--border); font-size: 0.9rem; font-family: 'Courier New', monospace; min-height: 200px; resize: vertical; transition: all 0.3s ease;"></textarea>
-      <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-        <button onclick="copyBrainfuckCode()" style="flex: 1;">Copy Code</button>
-        <button onclick="downloadBrainfuckCode()" style="flex: 1;">Download as .bf</button>
+      <div id="pagnaiPreview" class="audio-preview" style="display:none">
+        <audio id="pagnaiAudio" controls></audio>
+        <a id="pagnaiDownload" class="download-link" download="pagnai_audio.wav" style="display: inline-block; margin-top: 1rem;">Download Generated Audio</a>
       </div>
     </div>
   </div>
 
-  <div id="pagnaiTab" class="tabcontent">
-    <h2>PAGNAI: Procedural Audio Generation, Not Artificial Intelligence</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Generate procedural audio using mathematical algorithms and signal synthesis.</p>
-    
-    <div class="input-group" style="flex-direction: column; align-items: stretch; margin-bottom: 1.5rem;">
-      <label for="pagnaiWaveType" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Wave Type:</label>
-      <select id="pagnaiWaveType" style="width: 100%;">
-        <option value="sine">Sine Wave</option>
-        <option value="square">Square Wave</option>
-        <option value="sawtooth">Sawtooth Wave</option>
-        <option value="triangle">Triangle Wave</option>
-        <option value="noise">White Noise</option>
-      </select>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-      <div class="input-group" style="flex-direction: column;">
-        <label for="pagnaiFrequency" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Frequency (Hz):</label>
-        <input type="number" id="pagnaiFrequency" value="440" min="20" max="20000" step="1" style="width: 100%;">
-      </div>
-      <div class="input-group" style="flex-direction: column;">
-        <label for="pagnaiDuration" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Duration (seconds):</label>
-        <input type="number" id="pagnaiDuration" value="2" min="0.1" max="30" step="0.1" style="width: 100%;">
-      </div>
-      <div class="input-group" style="flex-direction: column;">
-        <label for="pagnaiVolume" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Volume:</label>
-        <input type="range" id="pagnaiVolume" value="0.5" min="0" max="1" step="0.01" style="width: 100%;">
-        <span id="pagnaiVolumeValue" style="color: var(--text-secondary); font-size: 0.9rem;">50%</span>
-      </div>
-    </div>
-
-    <div class="input-group" style="flex-direction: column; align-items: stretch; margin-bottom: 1.5rem;">
-      <div class="checkbox-group">
-        <input type="checkbox" id="pagnaiModulation">
-        <label for="pagnaiModulation">Enable Frequency Modulation</label>
-      </div>
-      <div id="pagnaiModControls" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-          <div class="input-group" style="flex-direction: column;">
-            <label for="pagnaiModFreq" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Mod. Frequency:</label>
-            <input type="number" id="pagnaiModFreq" value="5" min="0.1" max="100" step="0.1" style="width: 100%;">
-          </div>
-          <div class="input-group" style="flex-direction: column;">
-            <label for="pagnaiModDepth" style="color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem;">Mod. Depth:</label>
-            <input type="number" id="pagnaiModDepth" value="50" min="0" max="500" step="1" style="width: 100%;">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="input-group" style="flex-wrap: wrap; gap: 0.5rem;">
-      <button onclick="generatePAGNAI()" style="flex: 1; min-width: 150px;">Generate Audio</button>
-      <button onclick="playPAGNAI()" id="pagnaiPlayBtn" disabled style="flex: 1; min-width: 150px;">Play</button>
-      <button onclick="stopPAGNAI()" id="pagnaiStopBtn" disabled style="flex: 1; min-width: 150px;">Stop</button>
-    </div>
-
-    <div id="pagnaiPreview" class="audio-preview" style="display: none; margin-top: 2rem;">
-      <audio id="pagnaiAudio" controls style="display: block; width: 100%; max-width: 500px;"></audio>
-      <a id="pagnaiDownload" class="download-link" download="pagnai_audio.wav" style="display: inline-block; margin-top: 1rem;">Download Generated Audio</a>
-    </div>
-  </div>
-  </div>
-
-  <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-content">
-      <a href="https://github.com/Aspenini/JS-Media-Tool" target="_blank" class="github-link">
-        <img src="img/github.png" alt="GitHub" class="github-icon">
+      <a href="https://github.com/Aspenini/JS-Media-Tool" target="_blank" rel="noopener noreferrer" class="github-link">
+        <img src="/img/github.png" alt="GitHub" class="github-icon">
         <span>View on GitHub</span>
       </a>
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

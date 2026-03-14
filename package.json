@@ -1,0 +1,19 @@
+{
+  "name": "aspenini-media-tool",
+  "version": "2.0.0",
+  "description": "A powerful browser-based tool for pixel-perfect image scaling, diagonal image slicing, vintage audio effects, and more.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0"
+  }
+}
